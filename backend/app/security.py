@@ -57,8 +57,8 @@ def ip_hash(request: Request) -> str:
 
 # ---------------- passwords + TOTP ----------------
 def hash_password(pw: str) -> str:
-    if len(pw) < 14:
-        raise ValueError("Admin password must be at least 14 characters.")
+    if not pw:
+        raise ValueError("Enter a password.")
     return ph.hash(pw)
 
 

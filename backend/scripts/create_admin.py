@@ -17,9 +17,17 @@ def main():
     if len(sys.argv) != 2:
         sys.exit("usage: python -m scripts.create_admin EMAIL")
     email = sys.argv[1].strip().lower()
-    pw = getpass.getpass("Password (14+ characters): ")
-    if pw != getpass.getpass("Repeat password: "):
-        sys.exit("Passwords don't match.")
+
+
+    import os
+    pw = os.environ.pop("ADMIN_PASSWORD", "")
+    if not pw:
+        pw = getpass.getpass("Password (14+ characters): ")
+        if pw != getpass.getpass("Repeat password: "):
+            sys.exit("Passwords don't match.")
+
+
+
     pw_hash = hash_password(pw)
     secret = pyotp.random_base32()
     db.run(
