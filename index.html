@@ -917,7 +917,7 @@ const usd2=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maxi
 function demoDash(){
   const name=S.user.name||'John Doe', biz=S.a.legalName||'Doe Home Services Inc.';
   return {demo:true,name,email:S.user.email,
-    business:{legalName:biz,entity:S.a.entity||'Corporation',regState:S.a.regState||'NY',regStatus:'verified',regName:biz.toUpperCase(),regId:'6123457'},
+    business:{legalName:biz,entity:S.a.entity||'Corporation',regState:S.a.regState||'NY',regStatus:S.a.dosId?'verified':'manual_check',regName:biz.toUpperCase(),regId:S.a.dosId||''},
     applications:[{ref:'demo',business:biz,status:'quoted',statusText:'Quote ready',submitted:'2026-11-12',effective:'2026-11-20'}],
     quotes:[{id:1,carrier:'Harborline Mutual',amount:1842,isTotal:false,limits:'$1M per occurrence / $2M aggregate',starts:'2026-11-20',expires:'2026-11-26',status:'Ready to review',link:'#demo-quote'}],
     policies:[{id:1,carrier:'Brightwater Specialty',number:'BWS-GL-0042817',starts:'2025-11-20',ends:'2026-11-20',occurrence:'$1,000,000',aggregate:'$2,000,000',status:'active',certificatesOn:true,certificates:3,certLink:'#demo-cert'}],
@@ -1268,6 +1268,23 @@ const REGISTRIES={
       shows:['Entity name','File number','Formation date','Registered agent'],caveat:'Delaware\'s free search doesn\'t show status or owners.'},
   MD:{short:'Maryland SDAT',name:'Maryland SDAT (Maryland Business Express)',idLabel:'Department ID',ph:'e.g. W12345678',url:'https://egov.maryland.gov/businessexpress/entitysearch',status:true,
       shows:['Business name','Department ID','Status','Filing history']}};
+const NY_API='https://data.ny.gov/resource/n9v6-gdp6.json';
+const normName=x=>String(x||'').toUpperCase().replace(/&/g,' AND ').replace(/[^A-Z0-9 ]/g,' ').replace(/\b(LLC|L L C|INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|LTD|PLLC|LLP|LP)\b/g,' ').replace(/\s+/g,' ').trim();
+async function nyDirect(name){
+  const q=normName(name); if(q.length<3) return [];
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),8000);
+  const r=await fetch(`${NY_API}?$q=${encodeURIComponent(q)}&$limit=25`,{signal:ctl.signal}); clearTimeout(t);
+  if(!r.ok) throw new Error('ny');
+  const rows=(await r.json()).map(x=>({dosId:String(x.dos_id||''),name:x.current_entity_name||'',type:x.entity_type||'',
+    filed:String(x.initial_dos_filing_date||'').slice(0,10),county:x.county||'',jurisdiction:x.jurisdiction||''}));
+  const score=x=>{const a=normName(x.name);return (a===q?100:0)+(a.startsWith(q)||q.startsWith(a)?10:0)-Math.abs(a.length-q.length)/10};
+  return rows.sort((a,b)=>score(b)-score(a)).slice(0,6);
+}
+async function nyById(id){
+  const r=await fetch(`${NY_API}?dos_id=${encodeURIComponent(id)}`); if(!r.ok) throw new Error('ny');
+  const x=(await r.json())[0]; return x?{dosId:String(x.dos_id),name:x.current_entity_name||'',type:x.entity_type||'',filed:String(x.initial_dos_filing_date||'').slice(0,10),county:x.county||'',jurisdiction:x.jurisdiction||''}:null;
+}
+const fmtFiled=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d||'');return m?`${m[2]}/${m[3]}/${m[1]}`:(d||'')};
 function regPreview(rows){return `<dl>${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`}
 function bizCheckHTML(){
   const st=S.a.regState||'NY', R=REGISTRIES[st];
@@ -1290,17 +1307,20 @@ function bizCheckHTML(){
   h+=`<div class="help">We'll find your business in New York Department of State records so the name on your policy is exactly right.</div>`;
   h+=`<button type="button" class="btn btn-line btn-block" data-bsearch="1" style="white-space:normal;text-align:center" ${B.busy?'disabled':''}>${B.busy?'Searching…':'Search NY records for “'+esc(S.a.legalName||'your business')+'”'}</button>`;
   if(B.err) h+=`<div class="help" style="margin:8px 0 0;color:var(--bad)">${esc(B.err)}</div>`;
+  if(B.offline) h+=`<a class="btn btn-line btn-block" href="${REGISTRIES.NY.url}" target="_blank" rel="noopener noreferrer" style="margin-top:8px">Open the official NY search ↗</a>
+    <div style="margin-top:10px"><label class="l" for="i-regId">DOS ID</label><input type="text" id="i-regId" data-k="regId" value="${esc(S.a.regId||'')}" placeholder="e.g. 7571650" inputmode="numeric" maxlength="12"></div>`;
   if(B.results){
     h+= B.results.length?`<div class="opts" style="margin-top:10px">${B.results.map(r=>{
         const mism=typeMismatch(r.type);
         return `<button type="button" class="opt ${picked===r.dosId?'on':''}" data-bpick="${esc(r.dosId)}"><span class="dot"></span><span><b>${esc(r.name)}</b>
-          <small>${esc(titleCase(r.type))} · DOS ID ${esc(r.dosId)}${r.filed?' · filed '+esc(r.filed):''}${mism?' · <b>'+esc(mism)+'</b>':''}</small></span></button>`}).join('')}</div>`
+          <small>Active · ${esc(titleCase(r.type))} · DOS ID ${esc(r.dosId)}${r.filed?' · first filed '+esc(fmtFiled(r.filed)):''}${r.county?' · '+esc(titleCase(r.county)):''}${mism?' · <b>'+esc(mism)+'</b>':''}</small></span></button>`}).join('')}</div>`
       :`<div class="help" style="margin:8px 0 0">No active New York entity found with that name. Check the spelling, or tell us below.</div>`;
     h+=`<button type="button" class="opt ${S.a.bizUnlisted?'on':''}" data-bunlisted="1" style="margin-top:8px"><span class="box"></span><span>My business isn't listed<small>Brand new, registered in another state, or a DBA. Your broker will verify it.</small></span></button>`;
   }
   const r=picked&&(B.results||[]).find(x=>x.dosId===picked);
-  if(r) h+=`<div class="reg"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="tag" style="color:var(--muted)">NY Department of State record${B.demo?' · demo':''}</span><span class="pill ok">Match</span></div>
-    ${regPreview([['Legal name',esc(r.name)],['DOS ID',esc(r.dosId)],['Entity type',esc(titleCase(r.type))],['First filed',esc(r.filed||'')],['County',esc(titleCase(r.county||''))],['Formed in',esc(titleCase(r.jurisdiction||'New York'))]])}
+  if(r) h+=`<div class="reg"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="tag" style="color:var(--muted)">NY Department of State record</span><span class="pill ok">Match</span></div>
+    ${regPreview([['Name',esc(r.name)],['DOS ID',esc(r.dosId)],['Status','Active'],['Entity type',esc(r.type)],['Date of first filing',esc(fmtFiled(r.filed))],['County',esc(titleCase(r.county||''))],['Formed in',esc(titleCase(r.jurisdiction||'New York'))]])}
+    <div class="help" style="margin:8px 0 0">Source: New York Department of State, via data.ny.gov.</div>
     <div class="help" style="margin:8px 0 0">Your policy will be issued to this exact name.</div></div>`;
   if(picked&&S.a.entity==='SCorp') h+=`<div class="help" style="margin:8px 0 0">S-corp status is a federal tax election, so your broker may ask for your IRS acceptance letter (CP261).</div>`;
   return h;
@@ -1315,8 +1335,10 @@ async function bizSearch(){
   const n=String(S.a.legalName||'').trim();
   if(n.length<3){B.err='Enter your legal business name first.';renderStep();return}
   B.busy=true;B.err='';renderStep();
-  if(!LIVE.on){setTimeout(()=>{const t=S.a.entity==='LLC'?'DOMESTIC LIMITED LIABILITY COMPANY':'DOMESTIC BUSINESS CORPORATION';
-    B.demo=true;B.results=[{dosId:'6123457',name:n.toUpperCase(),type:t,filed:'2021-03-15',county:'NASSAU',jurisdiction:'NEW YORK'}];B.q=n;B.busy=false;renderStep()},600);return}
+  if(!LIVE.on){  // no backend (demo): ask New York's open data directly. Never invent a record.
+    try{B.results=await nyDirect(n);B.q=n;B.direct=true}
+    catch(e){B.results=null;B.err='This demo couldn\'t reach New York\'s records. Use the official search below and enter your DOS ID.';B.offline=true}
+    B.busy=false;renderStep();return}
   try{const {status,j}=await api('/api/business/lookup?name='+encodeURIComponent(n));
       if(status===200){B.results=j.results;B.q=n}else{B.err=j.error||'NY records are unavailable right now.';B.results=[]}}
   catch(e){B.err='NY records are unavailable right now.';B.results=[]}
@@ -1448,7 +1470,7 @@ function validate(){
     else if(f.type==='interests') ok=(v||[]).length>0&&v.every(it=>it.name.trim().length>=2&&it.street.trim().length>=3&&it.city.trim().length>=2&&/^[A-Za-z]{2}$/.test(it.state)&&/^\d{5}$/.test(it.zip));
     else if(f.type==='consent'||f.type==='feeagreement') ok=!f.req||v===true;
     else if(f.type==='emailverify') ok=!LIVE.on||!LIVE.cfg.emailVerification||((V.token||V.session)&&V.email===String(S.a.email||'').trim().toLowerCase());
-    else if(f.type==='bizcheck') ok=(S.a.regState&&S.a.regState!=='NY')?(/^[A-Za-z0-9-]{3,20}$/.test(S.a.regId||'')||!!S.a.bizUnlisted):(!LIVE.on||!!S.a.dosId||!!S.a.bizUnlisted);
+    else if(f.type==='bizcheck') ok=(S.a.regState&&S.a.regState!=='NY')?(/^[A-Za-z0-9-]{3,20}$/.test(S.a.regId||'')||!!S.a.bizUnlisted):(!!S.a.dosId||!!S.a.bizUnlisted||(B.offline&&/^\d{4,12}$/.test(S.a.regId||'')));
     else if(f.req&&empty) ok=false;
     if(ok&&!empty){
       if(f.type==='email') ok=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
