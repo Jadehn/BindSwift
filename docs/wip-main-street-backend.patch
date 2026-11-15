@@ -1,0 +1,237 @@
+diff --git a/backend/app/acord_map.py b/backend/app/acord_map.py
+index 1177147..46757a2 100644
+--- a/backend/app/acord_map.py
++++ b/backend/app/acord_map.py
+@@ -28,7 +28,59 @@ TRADES = {
+     "handyman":   dict(l="Handyman Services",           code="91342", naics="236118"),
+     "remodel":    dict(l="Residential Remodeling",      code="91583", naics="236118"),
+     "roofing":    dict(l="Roofing Contractor",          code="98677", naics="238160"),
++    # First appetite tier: main-street classes quoted in minutes. GL class codes are left for the
++    # broker to assign per carrier (they differ by carrier); NAICS only where the match is exact.
++    "salon":       dict(l="Hair Salon",                        code="", naics="812112", group="beauty"),
++    "barber":      dict(l="Barbershop",                        code="", naics="812111", group="beauty"),
++    "beauty":      dict(l="Nail, Lash & Braiding Services",    code="", naics="812113", group="beauty"),
++    "consultant":  dict(l="Business Consultant",               code="", naics="541611", group="office"),
++    "marketing":   dict(l="Marketing Agency",                  code="", naics="541613", group="office"),
++    "bookkeeping": dict(l="Bookkeeping & Tax Preparation",     code="", naics="541219", group="office"),
++    "doula":       dict(l="Doula Services",                    code="", naics="",       group="wellness"),
++    "wellness":    dict(l="Wellness Coaching",                 code="", naics="",       group="wellness"),
++    "retail":      dict(l="Retail Store",                      code="", naics="",       group="retail"),
+ }
++for _t in TRADES.values():
++    _t.setdefault("group", "trade")
++NATURE = {"trade": "Contractor", "beauty": "Service", "office": "Office", "wellness": "Service", "retail": "Retail"}
++SERVICES = {"cut": "haircuts & styling", "color": "color & chemical treatments", "nails": "nails",
++            "lash": "lashes & brows", "braid": "braiding & locs", "wax": "waxing & threading"}
++PLACES = {"homes": "clients' homes", "hospital": "hospitals & birth centers", "studio": "own office or studio",
++          "online": "online / by phone only"}
++yesno = lambda v: "Yes" if v == "Y" else "No"
++
++
++def class_details_dict(a: dict) -> list[str]:
++    """Same as class_details, for answers stored as a plain dict (admin pages, carrier sheets)."""
++    from types import SimpleNamespace
++    keys = ("trade", "stations", "services", "boothRental", "licensed", "clientVisits", "wantEO",
++            "workPlaces", "certified", "sqft", "sellOnline", "ownBrand")
++    d = {k: a.get(k) for k in keys}
++    for k in ("services", "workPlaces"):
++        d[k] = d[k] or []
++    return class_details(SimpleNamespace(**d)) if a.get("trade") in TRADES else []
++
++
++def class_details(a) -> list[str]:
++    """Plain-language facts about a main-street business, printed in the ACORD description."""
++    g = TRADES[a.trade]["group"]
++    out = []
++    if g == "beauty":
++        out.append(f"Stations/chairs: {a.stations or 'n/a'}. Services: "
++                   + (", ".join(SERVICES[x] for x in a.services) or "n/a") + ".")
++        out.append(f"Chairs/booths rented to independent operators: {yesno(a.boothRental)}. "
++                   f"All service providers NYS licensed: {yesno(a.licensed)}.")
++    elif g == "office":
++        out.append(f"Clients visit the office: {yesno(a.clientVisits)}. "
++                   f"Professional liability (E&O) also requested: {yesno(a.wantEO)}.")
++    elif g == "wellness":
++        out.append("Services provided at: " + (", ".join(PLACES[x] for x in a.workPlaces) or "n/a") + ". "
++                   f"Certified/credentialed: {yesno(a.certified)}. "
++                   f"Professional liability also requested: {yesno(a.wantEO)}.")
++    elif g == "retail":
++        out.append(f"Store size: {a.sqft or 'n/a'} sq ft. Sells online: {yesno(a.sellOnline)}. "
++                   f"Imports or sells under its own label: {yesno(a.ownBrand)}.")
++    return out
+ INTEREST_LABELS = {"AdditionalInsured": "Additional Insured", "EmployeeAsLessor": "Employee as Lessor",
+                    "LendersLossPayable": "Lender's Loss Payable", "Lienholder": "Lienholder",
+                    "LossPayee": "Loss Payee", "Mortgagee": "Mortgagee"}
+@@ -93,7 +145,9 @@ def build_acord(a: GLAnswers, fein: str) -> dict:
+     name = a.legalName.upper() + (f" DBA {a.dba.upper()}" if a.dba else "")
+     has_subs = a.subCost > 0
+ 
+-    desc = [t["l"], f"Operations: {a.opsDesc}"]
++    grp = t["group"]
++    trade = grp == "trade"
++    desc = [t["l"], f"Operations: {a.opsDesc}"] + class_details(a)
+     if a.premises == "Home":
+         desc.append("Provided location is the home office.")
+ 
+@@ -125,15 +179,18 @@ def build_acord(a: GLAnswers, fein: str) -> dict:
+         "ACORD_Location1_Employees_FullTime": str(a.ft),
+         "ACORD_Location1_AnnualRevenue": c(a.revenue),
+         # nature of business
+-        "ACORD_NatureOfBusiness_Contractor": "On",
++        f"ACORD_NatureOfBusiness_{NATURE[grp]}": "On",
+         "ACORD_NatureOfBusiness_Description": "\n".join(desc),
+-        "ACORD_NatureOfBusiness_InstallationPercentage": str(100 - a.offsitePct),
+-        "ACORD_NatureOfBusiness_OffPremisesInstallation": str(a.offsitePct),
+         # signature block
+         "ACORD_Signatures_Producer_Name": s.producer_name,
+         "ACORD_Signatures_Producer_NationalNumber": s.producer_npn,
+         "ACORD_Signatures_Applicant_Date": today,
+     }
++    if trade:
++        f125["ACORD_NatureOfBusiness_InstallationPercentage"] = str(100 - a.offsitePct)
++        f125["ACORD_NatureOfBusiness_OffPremisesInstallation"] = str(a.offsitePct)
++    if a.sqft:
++        f125["ACORD_Location1_OccupiedArea"] = a.sqft
+     if a.pt:
+         f125["ACORD_Location1_Employees_PartTime"] = str(a.pt)
+     if a.premises in ("Owner", "Tenant"):
+diff --git a/backend/app/integrations/coterie.py b/backend/app/integrations/coterie.py
+index 8b2bee0..328c66b 100644
+--- a/backend/app/integrations/coterie.py
++++ b/backend/app/integrations/coterie.py
+@@ -26,14 +26,26 @@ BASES = {"sandbox": "https://api-sandbox.coterieinsurance.com/v1.6/commercial",
+ # From Coterie's artisan & trade contractor guide (in appetite). Others: check with Coterie.
+ IN_APPETITE = {"drywall", "electrical", "paint_int", "paint_ext", "hvac", "masonry", "plumbing",
+                "roofing", "remodel"}
++# Main-street classes Bindswift targets first (Coterie writes BOP/GL for these in New York).
++MAIN_STREET = {"salon", "barber", "beauty", "consultant", "marketing", "bookkeeping", "doula", "wellness", "retail"}
+ 
+ 
+ def eligibility(a: dict) -> list[str]:
+     """Reasons this risk may be out of Coterie's appetite. Empty list = looks eligible."""
+     out = []
++    staff = int(a.get("ft") or 0) + int(a.get("pt") or 0)
++    if a.get("trade") in MAIN_STREET:
++        if float(a.get("revenue") or 0) > 10_000_000:
++            out.append("Revenue over $10M (Coterie's limit).")
++        if staff > 50:
++            out.append("More than 50 employees (Coterie's limit).")
++        if int(a.get("losses") or 0) > 3:
++            out.append("More than three claims in 5 years (Coterie's limit).")
++        return out
++    out.append("Coterie excludes contractor classes in New York State.")
+     if float(a.get("revenue") or 0) > 5_000_000:
+         out.append("Revenue over $5M (Coterie's contractor limit).")
+-    if int(a.get("ft") or 0) + int(a.get("pt") or 0) > 15:
++    if staff > 15:
+         out.append("More than 15 employees (Coterie's contractor limit).")
+     if a.get("trade") == "paint_ext" and a.get("height") != "1-3":
+         out.append("Exterior painting is limited to buildings under 3 stories.")
+diff --git a/backend/app/integrations/next_ins.py b/backend/app/integrations/next_ins.py
+index ee6fc1f..50a8161 100644
+--- a/backend/app/integrations/next_ins.py
++++ b/backend/app/integrations/next_ins.py
+@@ -10,11 +10,14 @@ portal's appetite checker; they change.
+ """
+ 
+ NEXT_TRADES = {"remodel", "carpentry", "handyman", "paint_int", "paint_ext", "roofing", "tile", "hvac"}
++MAIN_STREET = {"salon", "barber", "beauty", "consultant", "marketing", "bookkeeping", "doula", "wellness", "retail"}
+ 
+ 
+ def eligibility(a: dict) -> list[str]:
+     out = []
+     areas = set(a.get("areas") or [])
++    if a.get("trade") in MAIN_STREET:   # NEXT's New York contractor exclusion doesn't apply
++        areas = set()
+     # NEXT's contractor guide lists "performs work in the state of New York" as ineligible.
+     if areas & {"Brooklyn", "Queens", "Manhattan", "Bronx", "Staten Island", "Long Island", "Westchester"}:
+         out.append("Works in New York State: NEXT's contractor guide lists this as ineligible. "
+@@ -31,11 +34,16 @@ def eligibility(a: dict) -> list[str]:
+         out.append("Exterior work above 30 feet (3 stories).")
+     if "hazmat" in (a.get("opsChecks") or []):
+         out.append("Hazardous material abatement or remediation.")
+-    if a.get("trade") not in NEXT_TRADES:
++    if a.get("trade") not in NEXT_TRADES | MAIN_STREET:
+         out.append("Trade isn't on NEXT's highlighted contractor list. Confirm in the appetite checker.")
+     return out
+ 
+ 
++def _details(a: dict) -> list[str]:
++    from ..acord_map import class_details_dict
++    return class_details_dict(a)
++
++
+ def answer_sheet(a: dict) -> list[tuple[str, str]]:
+     """The answers NEXT's contractor GL flow asks for, in plain order, ready to key in."""
+     occ = "$2M / $4M" if a.get("limits") == "2/4" else "$1M / $2M"
+@@ -52,6 +60,7 @@ def answer_sheet(a: dict) -> list[tuple[str, str]]:
+         ("Annual payroll", f"${float(a.get('payroll') or 0):,.0f}"),
+         ("Employees (FT / PT)", f"{a.get('ft', 0)} / {a.get('pt', 0)}"),
+         ("Subcontractor costs", f"${float(a.get('subCost') or 0):,.0f}"),
++        ("Class details", " ".join(_details(a)) or "None"),
+         ("Claims in last 5 yrs", str(a.get("losses", "0"))),
+         ("Limits", occ),
+         ("Start date", str(a.get("effDate", ""))),
+diff --git a/backend/app/models.py b/backend/app/models.py
+index a639bb0..dcbefda 100644
+--- a/backend/app/models.py
++++ b/backend/app/models.py
+@@ -11,7 +11,11 @@ Short = Field(max_length=120)
+ Long = Field(default="", max_length=2000)
+ 
+ TRADE_IDS = Literal["carpentry", "paint_int", "paint_ext", "electrical", "plumbing", "hvac",
+-                    "masonry", "tile", "drywall", "handyman", "remodel", "roofing"]
++                    "masonry", "tile", "drywall", "handyman", "remodel", "roofing",
++                    "salon", "barber", "beauty", "consultant", "marketing", "bookkeeping",
++                    "doula", "wellness", "retail"]
++CONTRACTOR_TRADES = {"carpentry", "paint_int", "paint_ext", "electrical", "plumbing", "hvac",
++                     "masonry", "tile", "drywall", "handyman", "remodel", "roofing"}
+ OPS = Literal["design", "blasting", "excavation", "demolition", "structural", "hazmat", "flammables",
+               "leaseequip", "leaseemp", "jv", "drones", "otherbiz", "parent", "violations"]
+ AREAS = Literal["Brooklyn", "Queens", "Manhattan", "Bronx", "Staten Island", "Long Island", "Westchester"]
+@@ -80,8 +84,19 @@ class GLAnswers(BaseModel):
+     trade: TRADE_IDS
+     opsDesc: str = Field(min_length=10, max_length=1000)
+     resPct: Literal["100", "75", "50", "25"] | None = None
+-    height: Literal["1-3", "4-6", "7+", "ext7"]
+-    areas: list[AREAS] = Field(min_length=1, max_length=7)
++    height: Literal["1-3", "4-6", "7+", "ext7"] | None = None      # contractors only
++    areas: list[AREAS] = Field(default_factory=list, max_length=7)  # contractors only
++    # main-street classes
++    stations: str = Field(default="", max_length=3, pattern=r"^\d*$")
++    services: list[Literal["cut", "color", "nails", "lash", "braid", "wax"]] = Field(default_factory=list, max_length=6)
++    boothRental: YN | None = None
++    licensed: YN | None = None
++    clientVisits: YN | None = None
++    wantEO: YN | None = None
++    workPlaces: list[Literal["homes", "hospital", "studio", "online"]] = Field(default_factory=list, max_length=4)
++    certified: YN | None = None
++    ownBrand: YN | None = None
++    sellOnline: YN | None = None
+     offsitePct: int = Field(default=100, ge=0, le=100)  # share of work done at customers' sites
+     # crew
+     ft: int = Field(ge=0, le=500)
+@@ -113,9 +128,9 @@ class GLAnswers(BaseModel):
+     cancelled: YN
+     cancelWhy: Literal["NonPayment", "NonRenewal", "AgentStopRepresenting", "Underwriting"] | None = None
+     # ops / safety
+-    safety: YN
++    safety: YN = "N"
+     osha: YN | None = None
+-    install: YN
++    install: YN = "N"
+     installDesc: str = Field(default="", max_length=300)
+     holdHarmless: YN
+     opsChecks: list[OPS] = Field(default_factory=list, max_length=14)
+@@ -162,6 +177,11 @@ class GLAnswers(BaseModel):
+                                            street=self.holderAddr or "Address on file", city="New York", zip="10001")]
+             else:
+                 raise ValueError("Add at least one person or company to list on the policy")
++        if self.trade in CONTRACTOR_TRADES:
++            if not self.height or not self.areas:
++                raise ValueError("Tell us how tall the buildings are and where you work")
++        else:   # main-street businesses: contractor-only answers don't apply
++            self.subCost, self.subsInsured, self.offsitePct, self.install = 0, None, 100, "N"
+         if self.subCost > 0 and self.subsInsured is None:
+             raise ValueError("Tell us whether subcontractors carry insurance")
+         return self
