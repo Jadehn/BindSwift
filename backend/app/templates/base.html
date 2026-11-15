@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block title %}Bindswift Admin{% endblock %}</title>
+<style>
+:root{--navy:#0E1B2C;--ink:#14202E;--muted:#5B6878;--line:#E3E7EC;--bg:#F6F7F9;--amber:#F2A516;--green:#1F8A5B;--red:#B4322B}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.45}
+header{background:var(--navy);color:#fff}header .in{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+header b{font-size:17px}header form{display:inline}header span{color:#C6D0DC;font-size:13px;margin-right:12px}
+main{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+a{color:var(--navy)}h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:24px 0 8px}
+.btn{display:inline-block;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn-amber{background:var(--amber);color:var(--navy)}.btn-dark{background:var(--navy);color:#fff}.btn-light{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}.btn-red{background:#fff;border:1px solid var(--red);color:var(--red)}.btn-sm{padding:6px 10px;font-size:13px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+th{background:#F0F2F5;font-weight:600}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:#EAF0F8}
+.pill.pending_review{background:#FFF4DC;color:#8A5A00}.pill.approved{background:#E6F4EC;color:var(--green)}.pill.rejected{background:#FBEAE8;color:var(--red)}
+.muted{color:var(--muted)}.err{color:var(--red)}
+input,textarea,select{font:inherit;width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
+label{display:block;font-weight:600;margin:12px 0 4px}
+.tabs a{display:inline-block;padding:6px 12px;border-radius:99px;text-decoration:none;margin:0 4px 8px 0;background:#fff;border:1px solid var(--line);font-size:14px}
+.tabs a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+dl{display:grid;grid-template-columns:200px 1fr;gap:4px 12px;margin:0}dt{color:var(--muted)}dd{margin:0;word-break:break-word}
+code{font-size:12px}
+.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin:6px 0}.chk input{width:auto}
+</style>
+</head>
+<body>
+<header><div class="in"><b>Bindswift Admin</b>
+{% if admin %}<div><span>{{ admin.email }}</span>
+<form method="post" action="{{ base }}/logout"><input type="hidden" name="csrf" value="{{ admin.csrf_token }}"><button class="btn btn-light btn-sm">Log out</button></form></div>{% endif %}
+</div></header>
+<main>{% block content %}{% endblock %}</main>
+</body>
+</html>

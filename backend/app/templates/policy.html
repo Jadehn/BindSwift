@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ base }}/submissions/{{ sid }}#policies">← #{{ sid }} {{ p.insured_name }}</a></p>
+<h1>Policy and certificates</h1>
+<p class="muted">Certificates print exactly what's on this page. Check it against the carrier's declarations page, then turn on certificates.
+  {% if not p.ready %}<b>Certificates are off until you confirm.</b>{% else %}Certificates are on; the contractor has their private link.{% endif %}</p>
+<form method="post" class="card">
+  <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+  <div class="grid">
+    <div>
+      <label>Insurer (as on the dec page)</label><input name="carrier" value="{{ p.carrier }}" required>
+      <label>NAIC #</label><input name="naic" value="{{ p.naic or '' }}" inputmode="numeric">
+      <label>Policy number</label><input name="policy_number" value="{{ p.policy_number or '' }}">
+      <div class="grid"><div><label>Effective</label><input type="date" name="effective_date" value="{{ p.effective_date or '' }}"></div>
+        <div><label>Expires</label><input type="date" name="expiration_date" value="{{ p.expiration_date or '' }}"></div></div>
+      <label>Form</label><select name="policy_form"><option {{ 'selected' if p.policy_form=='Occurrence' }}>Occurrence</option><option {{ 'selected' if p.policy_form=='Claims-made' }}>Claims-made</option></select>
+      <label>Named insured</label><input name="insured_name" value="{{ p.insured_name }}">
+      <label>Insured address</label><input name="insured_address" value="{{ p.insured_address }}">
+      <label>Status</label><select name="status">{% for x in ['active','cancelled','expired'] %}<option {{ 'selected' if p.status==x }}>{{ x }}</option>{% endfor %}</select>
+    </div>
+    <div>
+      {% set names = {'each_occurrence':'Each occurrence','general_aggregate':'General aggregate','products_aggregate':'Products / completed ops agg.','personal_advertising':'Personal & advertising injury','damage_rented':'Damage to rented premises','medical':'Medical expense'} %}
+      {% for k in keys %}<label>{{ names[k] }}</label><input name="lim_{{ k }}" value="{{ (p.limits or {}).get(k, '') }}">{% endfor %}
+      <label>Description of operations (prints on every certificate)</label><textarea name="ops_description" rows="3">{{ p.ops_description or '' }}</textarea>
+    </div>
+  </div>
+  <h3>Blanket endorsements on this policy</h3>
+  <p class="muted">Tick only what the policy actually has. Requests for anything unticked come to you for approval instead of issuing.</p>
+  <label class="chk"><input type="checkbox" name="blanket_ai" value="1" {{ 'checked' if p.blanket_ai }}> Blanket additional insured (where required by written contract)</label>
+  <label class="chk"><input type="checkbox" name="blanket_pnc" value="1" {{ 'checked' if p.blanket_pnc }}> Primary & non-contributory</label>
+  <label class="chk"><input type="checkbox" name="blanket_wos" value="1" {{ 'checked' if p.blanket_wos }}> Waiver of subrogation</label>
+  <label class="chk" style="margin-top:12px"><input type="checkbox" name="ready" value="1" {{ 'checked' if p.ready }}> <b>Details match the dec page. Let the contractor issue certificates.</b></label>
+  <button class="btn btn-dark" style="margin-top:12px">Save</button>
+</form>
+<h3>Certificates ({{ certs|length }})</h3>
+{% if not certs %}<p class="muted">None yet.</p>{% endif %}
+{% for c in certs %}
+<div class="card" style="padding:12px 16px">
+  <b>{{ c.holder_name }}</b> · {{ c.holder_address }} {% if c.project %}· {{ c.project }}{% endif %}<br>
+  <span class="muted">{{ c.number }} · {{ c.created_at.strftime('%m/%d/%Y %I:%M %p') }} ·
+    {{ ['AI' if c.want_ai, 'P&NC' if c.want_pnc, 'WOS' if c.want_wos]|select|join(', ') or 'Proof of coverage only' }} ·
+    <b>{{ c.status.replace('_',' ') }}</b></span>
+  {% if c.status == 'issued' %} · <a href="{{ base }}/submissions/{{ sid }}/policies/{{ p.id }}/certs/{{ c.id }}.pdf">PDF</a>{% endif %}
+  {% if c.status == 'pending_approval' %}
+  <form method="post" action="{{ base }}/submissions/{{ sid }}/policies/{{ p.id }}/certs/{{ c.id }}" style="display:flex;gap:8px;margin-top:8px">
+    <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+    <button class="btn btn-dark" name="decision" value="approve">Endorsement is on the policy. Issue it</button>
+    <button class="btn" name="decision" value="decline">Decline</button></form>{% endif %}
+</div>{% endfor %}
+{% endblock %}

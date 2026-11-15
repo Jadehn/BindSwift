@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ base }}/submissions/{{ s.id }}#carriers">← #{{ s.id }} {{ s.legal_name }}</a></p>
+<h1>Review quote before the client sees it</h1>
+<p class="muted">Read from <b>{{ q.source_filename }}</b> by the {{ 'AI reader' if d.source == 'ai' else 'built-in reader' }}.
+  Check every figure against the PDF. <a href="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/original.pdf">Open the original</a></p>
+{% if d.ai_error %}<p class="err">{{ d.ai_error }}</p>{% endif %}
+{% if d.note %}<p class="err">{{ d.note }}</p>{% endif %}
+{% if d.missing %}<p class="err">Couldn't find: {{ d.missing | join(', ') }}. Fill these in.</p>{% endif %}
+{% if d.checks %}<p class="{{ '' if d.checks.sum_matches_total else 'err' }}">Premium + fees + taxes = ${{ "{:,.2f}".format(d.checks.calculated) }}
+  {{ '✓ matches the total' if d.checks.sum_matches_total else '✗ does not match the total; check the numbers' }}</p>{% endif %}
+{% if d.internal and d.internal.commission %}<p class="muted">Your commission (never shown to the client): {{ d.internal.commission }}</p>{% endif %}
+{% set lim = d.limits or {} %}
+<form method="post" class="card">
+  <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+  <div class="grid">
+    <div>
+      <label>Insurance company (carrier)</label><input name="carrier" value="{{ d.carrier or '' }}" required>
+      <label>Admitted status</label><input name="admitted" value="{{ d.admitted or '' }}" placeholder="Admitted / Non-admitted (surplus lines)">
+      <label>A.M. Best rating</label><input name="am_best" value="{{ d.am_best or '' }}">
+      <label>Wholesaler (not shown to client)</label><input name="wholesaler" value="{{ d.wholesaler or '' }}">
+      <label>Quote number</label><input name="quote_number" value="{{ d.quote_number or '' }}">
+      <label>Coverage</label><input name="coverage" value="{{ d.coverage or '' }}">
+      <label>Policy form</label><input name="policy_form" value="{{ d.policy_form or '' }}" placeholder="Occurrence">
+      <div class="grid"><div><label>Policy start</label><input name="policy_start" value="{{ d.policy_start or '' }}" placeholder="MM/DD/YYYY"></div>
+        <div><label>Policy end</label><input name="policy_end" value="{{ d.policy_end or '' }}" placeholder="MM/DD/YYYY"></div></div>
+      <label>Quote valid until</label><input name="quote_expires" value="{{ d.quote_expires or '' }}" placeholder="MM/DD/YYYY">
+      <label>Billing</label><input name="billing" value="{{ d.billing or '' }}" placeholder="Agency bill / Direct bill">
+    </div>
+    <div>
+      <label>Premium lines (one per line: Label | amount)</label>
+      <textarea name="premium_lines" rows="3">{% for x in d.premium_lines or [] %}{{ x.label }} | {{ x.amount }}
+{% endfor %}</textarea>
+      <label>Total premium</label><input name="premium" value="{{ d.premium or '' }}">
+      <label>Fees (Label | amount)</label>
+      <textarea name="fees" rows="3">{% for x in d.fees or [] %}{{ x.label }} | {{ x.amount }}
+{% endfor %}</textarea>
+      <label>Taxes (Label | amount)</label>
+      <textarea name="taxes" rows="2">{% for x in d.taxes or [] %}{{ x.label }} | {{ x.amount }}
+{% endfor %}</textarea>
+      <label>Total due to the insurer</label><input name="total" value="{{ d.total or '' }}" required>
+      <div class="grid">
+        <div><label>Each occurrence</label><input name="limit_each_occurrence" value="{{ lim.each_occurrence or '' }}"></div>
+        <div><label>General aggregate</label><input name="limit_general_aggregate" value="{{ lim.general_aggregate or '' }}"></div>
+        <div><label>Products/completed ops</label><input name="limit_products_aggregate" value="{{ lim.products_aggregate or '' }}"></div>
+        <div><label>Personal & advertising</label><input name="limit_personal_advertising" value="{{ lim.personal_advertising or '' }}"></div>
+        <div><label>Damage to rented premises</label><input name="limit_damage_rented" value="{{ lim.damage_rented or '' }}"></div>
+        <div><label>Medical expense</label><input name="limit_medical" value="{{ lim.medical or '' }}"></div>
+      </div>
+      <label>Deductible</label><input name="deductible" value="{{ d.deductible or '' }}">
+    </div>
+  </div>
+  <label>What the insurer needs before binding (one per line; the client sees these)</label>
+  <textarea name="prior_to_bind" rows="6">{% for x in d.prior_to_bind or [] %}{{ x }}
+{% endfor %}</textarea>
+  <label>Note to the client (optional)</label>
+  <textarea name="client_note" rows="2" placeholder="e.g. This carrier requires a signed application before binding; I'll send it to you.">{{ d.client_note or '' }}</textarea>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" name="share_original" value="yes" style="width:auto" {{ 'checked' if q.share_original }}>
+    Let the client download the insurer's original PDF. It may show your commission, your agency address and the wholesaler. A Bindswift summary PDF is always available to them.</label>
+  <p><button class="btn btn-dark">Save. Ready to send to the client</button></p>
+</form>
+{% endblock %}

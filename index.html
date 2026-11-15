@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0A0A0A">
+<title>Bindswift — Fast General Liability quotes for NYC businesses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">
+<script src="vendor/pdf.min.js" defer></script>
+<script src="vendor/pdf.worker.min.js" defer></script>
+<style>
+:root{
+  --black:#0A0A0A; --ink:#111111; --ink-2:#2A2A2A; --muted:#6E6E6E; --line:#E6E6E6; --line-2:#D4D4D4;
+  --bg:#F7F7F6; --card:#FFFFFF; --soft:#F0F0EF; --white:#FFFFFF;
+  --ok:#0F7B4B; --ok-soft:#E8F5EE; --bad:#B42318; --bad-soft:#FDECEA;
+  --r:16px; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 28px rgba(0,0,0,.06);
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --display:'Space Grotesk',Inter,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;caret-color:transparent}
+input,textarea,select,[contenteditable]{caret-color:auto}
+button,.btn,.opt,.chip,.tabs,.pv-tabs,.doc,.tag,.stat b,.brand,summary,label{-webkit-user-select:none;user-select:none}
+.phone,.marquee{-webkit-user-select:none;user-select:none;pointer-events:none;cursor:default}
+h1,h2,h3,h4{font-family:var(--display);margin:0;letter-spacing:-.02em;font-weight:700}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+:root{color-scheme:light}
+button,input,select,textarea{color:var(--ink)}
+select option{color:var(--ink);background:#fff}
+.wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+.view{display:none}.view.on{display:block}
+.mono{font-family:var(--mono)}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:rgba(10,10,10,.92);backdrop-filter:blur(10px);color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em}
+.brand .mk{width:30px;height:30px;border-radius:9px;border:1.5px solid #fff;display:grid;place-items:center}
+.top nav{display:flex;gap:8px;align-items:center}
+.pill-proto{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#BDBDBD;border:1px solid rgba(255,255,255,.2);padding:3px 9px;border-radius:99px}
+.btn{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:999px;padding:12px 20px;font-weight:600;font-size:15px;text-decoration:none;transition:transform .06s,background .15s,box-shadow .15s,border-color .15s}
+.btn:active{transform:translateY(1px)}
+.btn-white{background:#fff;color:var(--black)}
+.btn-white:hover{box-shadow:0 0 0 4px rgba(255,255,255,.18)}
+.btn-ghost{background:transparent;color:inherit;border:1px solid currentColor}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+.btn-black{background:var(--black);color:#fff}
+.btn-black:hover{background:#262626}
+.btn-line{background:#fff;color:var(--ink);border:1px solid var(--line-2)}
+.btn-line:hover{border-color:var(--ink)}
+.btn-sm{padding:8px 14px;font-size:14px}
+.btn-lg{padding:15px 26px;font-size:16.5px}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.arrow{font-family:var(--mono)}
+
+/* home */
+.hero{background:var(--black);color:#fff;padding:72px 0 84px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse at 70% 30%,#000 30%,transparent 75%)}
+.hero:after{content:"";position:absolute;right:-160px;top:-160px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 62%)}
+.hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:48px;align-items:center;position:relative;z-index:1}
+.status{display:inline-flex;align-items:center;gap:8px;color:#CFCFCF;border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:6px 12px;margin-bottom:22px}
+.status i{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7)}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+.hero h1{font-size:54px;line-height:1.02;font-weight:700}
+.hero h1 .dim{color:#8A8A8A}
+.hero p.lead{font-size:18px;color:#BDBDBD;margin:20px 0 30px;max-width:520px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero-note{margin-top:18px;font-size:13px;color:#8A8A8A}
+.phone{background:#000;border-radius:36px;padding:11px;box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12);max-width:300px;margin-left:auto}
+.phone-in{background:#fff;color:var(--ink);border-radius:26px;padding:18px 16px;min-height:440px}
+.ph-h{display:flex;justify-content:space-between;margin-bottom:14px;color:var(--muted)}
+.ph-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.ph-card b{font-family:var(--display)}
+.ph-tag{font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;background:var(--black);padding:2px 8px;border-radius:99px;letter-spacing:.08em}
+.ph-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--muted)}
+.ph-row span:last-child{color:var(--ink);font-weight:600}
+.ph-send{background:var(--black);color:#fff;border-radius:999px;padding:12px;text-align:center;font-weight:600;margin-top:12px}
+.ph-toast{margin-top:10px;font-size:12px;background:var(--soft);border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center}
+.strip{background:#fff;border-bottom:1px solid var(--line)}
+.strip .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.stat{padding:26px 22px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat b{display:block;font-family:var(--display);font-size:30px;letter-spacing:-.02em}
+.stat>span{font-size:14px;color:var(--muted)}
+.sec{padding:72px 0}
+.sec h2{font-size:36px;margin-bottom:10px}
+.sec .sub{color:var(--muted);max-width:600px;margin-bottom:34px}
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow)}
+.num{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.num:after{content:"";flex:1;height:1px;background:var(--line)}
+.card h3{font-size:20px;margin-bottom:6px}
+.card p{color:var(--muted);margin:0;font-size:15px}
+.trades{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff;border:1px solid var(--line-2);border-radius:99px;padding:8px 15px;font-size:14px;font-weight:500}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.faq details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px}
+.faq summary{font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+.faq summary:after{content:"+";font-family:var(--mono);color:var(--muted)}
+.faq details[open] summary:after{content:"–"}
+.faq p{color:var(--muted);margin:10px 0 0}
+.cta-band{background:var(--black);color:#fff;border-radius:24px;padding:44px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden}
+.cta-band:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:32px 32px}
+.cta-band>*{position:relative}
+.cta-band h2{font-size:30px}
+.cta-band p{color:#BDBDBD;margin:6px 0 0}
+footer{padding:32px 0 48px;color:var(--muted);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* login */
+.auth{min-height:calc(100vh - 62px);display:grid;place-items:center;padding:32px 20px;background:radial-gradient(circle at 50% 0,#fff 0,var(--bg) 60%)}
+.auth-card{width:100%;max-width:420px}
+.auth-card h1{font-size:28px;margin-bottom:4px}
+.tabs{display:flex;background:var(--soft);border-radius:999px;padding:4px;margin:20px 0}
+.tabs button{flex:1;border:0;background:transparent;padding:9px;border-radius:999px;font-weight:600;color:var(--muted)}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:16px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* forms */
+.f{margin-bottom:20px}
+.f label.l{display:block;font-weight:600;font-size:15px;margin-bottom:7px}
+.f .opt-tag{color:var(--muted);font-weight:400}
+.f .help{font-size:13px;color:var(--muted);margin:-3px 0 9px}
+.f input[type=text],.f input[type=email],.f input[type=tel],.f input[type=password],.f input[type=date],.f select,.f textarea{
+  width:100%;border:1px solid var(--line-2);border-radius:12px;padding:13px 14px;font:inherit;background:#fff;color:var(--ink);outline:none;transition:border .15s,box-shadow .15s}
+.f textarea{min-height:96px;resize:vertical}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--ink);box-shadow:0 0 0 4px rgba(0,0,0,.06)}
+.f.err input,.f.err select,.f.err textarea{border-color:var(--bad)}
+.f .emsg{display:none;color:var(--bad);font-size:13px;margin-top:6px}
+.f.err .emsg{display:block}
+.f.err .opts{outline:1px solid var(--bad);outline-offset:4px;border-radius:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opts{display:grid;gap:8px}
+.opts.cols2{grid-template-columns:1fr 1fr}
+.opt{display:flex;align-items:center;gap:11px;border:1px solid var(--line-2);border-radius:12px;padding:12px 14px;background:#fff;text-align:left;font-weight:500;color:var(--ink);width:100%;transition:border-color .12s,background .12s}
+.opt:hover{border-color:#9A9A9A}
+.opt.on{border-color:var(--black);background:var(--black);color:#fff}
+.opt .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid #A3A3A3;flex:none;display:grid;place-items:center}
+.opt.on .dot{border-color:#fff}
+.opt.on .dot:after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.opt .box{width:18px;height:18px;border-radius:5px;border:1.5px solid #A3A3A3;flex:none;display:grid;place-items:center}
+.opt.on .box{background:#fff;border-color:#fff}
+.opt.on .box:after{content:"";width:5px;height:9px;border:solid var(--black);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.opt small{display:block;color:var(--muted);font-weight:400;font-size:13px}
+.opt.on small{color:#BDBDBD}
+.yn{display:flex;gap:8px}
+.yn .opt{justify-content:center;width:auto;flex:1}
+.money{position:relative}
+.money:before{content:"$";position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.money input{padding-left:28px!important}
+.check-line{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink-2)}
+.check-line input{margin-top:3px;width:18px;height:18px;accent-color:var(--black)}
+
+/* signature */
+.sigpad{position:relative;border:1px solid var(--line-2);border-radius:14px;background:#fff;height:120px;margin-top:10px;overflow:hidden;background-image:linear-gradient(rgba(0,0,0,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px);background-size:20px 20px}
+.sigpad .ln{position:absolute;left:22px;right:22px;bottom:30px;border-bottom:1px solid #9A9A9A}
+.sigpad .x{position:absolute;left:22px;bottom:34px;font-family:var(--mono);color:var(--muted);font-size:14px}
+.sigpad .sig{position:absolute;left:44px;right:20px;bottom:24px;font-family:'Great Vibes',cursive;font-size:44px;line-height:1;color:#0D1430;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.sigpad .ph{color:#C4C4C4}
+.sigpad .cap{position:absolute;right:14px;bottom:8px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em}
+
+/* quote flow */
+.flow{max-width:660px;margin:0 auto;padding:28px 20px 130px}
+.flow-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--muted)}
+.bar{height:4px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:32px}
+.bar i{display:block;height:100%;background:var(--black);border-radius:99px;transition:width .3s}
+.flow h2{font-size:30px;margin-bottom:6px}
+.flow .sub{color:var(--muted);margin:0 0 26px}
+.flow-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom));z-index:15}
+.flow-nav .in{max-width:620px;margin:0 auto;display:flex;gap:10px}
+.flow-nav .btn-black{flex:1}
+.sample{font-family:var(--mono);font-size:12px;color:var(--ink);background:#fff;border:1px dashed var(--ink);border-radius:99px;padding:6px 12px}
+.rev{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.rev-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rev-h b{font-family:var(--display)}
+.rev-h button{border:0;background:none;color:var(--ink);font-weight:600;font-size:14px;text-decoration:underline}
+.rev dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:4px 14px;font-size:14px}
+.rev dt{color:var(--muted)}
+.rev dd{margin:0;text-align:right;font-weight:500;word-break:break-word}
+.notice{background:#fff;border:1px solid var(--line);border-left:3px solid var(--black);border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:18px}
+.preview-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--black);color:#fff;border-radius:16px;padding:16px 18px;margin:6px 0 22px}
+.preview-cta small{display:block;color:#BDBDBD}
+
+/* loading */
+.loading{max-width:460px;margin:0 auto;padding:80px 20px;text-align:center}
+.spin{width:46px;height:46px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--black);animation:sp .9s linear infinite;margin:0 auto 24px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.load-steps{text-align:left;margin:24px auto 0;max-width:330px;font-family:var(--mono);font-size:13.5px}
+.load-steps div{display:flex;gap:10px;align-items:center;padding:7px 0;color:#A3A3A3}
+.load-steps div.done{color:var(--ink)}
+.load-steps div i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line-2);flex:none;position:relative}
+.load-steps div.done i{background:var(--black);border-color:var(--black)}
+.load-steps div.done i:after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+
+/* results */
+.res{padding-top:32px;padding-bottom:70px}
+.dash{padding-top:32px;padding-bottom:80px}
+.checker{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+.ck-form{padding:22px}
+.ck-q{margin-bottom:16px}.ck-q:last-child{margin-bottom:0}
+.ck-q .l{display:block;font-weight:600;font-size:14.5px;margin-bottom:8px}
+.ck-q select{width:100%;border:1px solid var(--line-2);border-radius:12px;padding:12px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line-2);background:#fff;color:var(--ink);border-radius:99px;padding:8px 13px;font:inherit;font-size:14px;cursor:pointer}
+.seg button.on{background:var(--black);color:#fff;border-color:var(--black)}
+.ck-two{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.ck-out{background:var(--black);color:#fff;border-radius:20px;padding:26px;position:sticky;top:80px}
+.ck-out .tag{color:#9A9A9A}
+.ck-score{font-family:var(--display);font-size:64px;line-height:1;margin:10px 0 2px;font-weight:600}
+.ck-score small{font-size:20px;color:#9A9A9A}
+.ck-verdict{font-size:22px;font-weight:600;margin:6px 0 4px}
+.ck-out p{color:#C9C9C9;margin:0 0 12px;font-size:15px}
+.ck-meter{height:8px;background:#2A2A2A;border-radius:99px;overflow:hidden;margin:14px 0}
+.ck-meter i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.ck-out ul{margin:0 0 16px;padding-left:18px;color:#C9C9C9;font-size:14px}
+.ck-out .fine{color:#8A8A8A;font-size:12px;margin:12px 0 0}
+@media (max-width:820px){.checker{grid-template-columns:1fr}.ck-out{position:static}}
+.dash h1{font-size:34px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.dash .card{padding:20px}
+.dash .card h3{font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dash .count{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:400}
+.start{background:var(--black);color:#fff;border-radius:20px;padding:26px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px}
+.start h2{font-size:24px;color:#fff;margin:0}.start p{color:#BDBDBD;margin:4px 0 0}
+.item{border-top:1px solid var(--line);padding:14px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.item:first-of-type{border-top:0}
+.item .t{font-weight:600}.item .s{color:var(--muted);font-size:13.5px;margin-top:2px}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pill{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line-2);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.pill.dark{background:var(--black);color:#fff;border-color:var(--black)}
+.empty{color:var(--muted);font-size:14.5px;padding:6px 0}
+.doc{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.doc:first-of-type{border-top:0}
+.doc a,.doc button{white-space:nowrap}
+.reg{margin-top:10px;border:1px solid var(--line);border-radius:14px;background:var(--bg);padding:14px 16px}
+.reg dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:8px 0 0;font-size:14px}
+.reg dt{color:var(--muted)}.reg dd{margin:0;font-weight:500}
+.states{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.states button{border:1px solid var(--line-2);background:#fff;color:var(--ink);border-radius:99px;padding:7px 14px;font-weight:600;font:inherit;font-size:14px;cursor:pointer}
+.states button.on{background:var(--black);color:#fff;border-color:var(--black)}
+.tier{margin-top:26px}
+.tier-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line-2);padding-bottom:8px;margin-bottom:12px}
+.tier-h h2{font-size:22px;margin:0}
+.ap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ap{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+.ap b{display:block;font-size:16px}
+.ap .bar{height:6px;border-radius:99px;background:var(--soft);margin:10px 0 6px;overflow:hidden}
+.ap .bar i{display:block;height:100%;background:var(--black);border-radius:99px}
+.ap small{color:var(--muted);font-size:13px;display:block}
+@media (max-width:820px){.dash-grid{grid-template-columns:1fr}.ap-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){body.authed #navQuote,body.authed #navLogout{display:none}
+  .top nav{gap:6px}.dash{padding-top:20px}.dash h1{font-size:26px}
+  .start{padding:18px;border-radius:16px;margin-top:14px}.start h2{font-size:20px}.start p{font-size:14px}.start .btn{width:100%;justify-content:center;padding:12px 16px;font-size:15px}
+  .dash-grid{gap:12px;margin-top:12px}.dash .card{padding:16px;border-radius:14px}.dash .card h3{font-size:16.5px}
+  .item{padding:12px 0;gap:8px}.item .t{font-size:15px}.item .s{font-size:13px}.item .acts .btn{width:100%;justify-content:center}
+  .doc{padding:9px 0;font-size:14px}.doc .btn{padding:6px 12px;font-size:13px}
+  .biz-line{font-size:14px}.ck-form{padding:16px}.ck-out{padding:20px}.ck-score{font-size:52px}.ck-two{grid-template-columns:1fr}
+  .ap-grid{grid-template-columns:1fr}.dash h1{font-size:28px}.item{flex-direction:column}.item .acts{justify-content:flex-start}}
+.res-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.res-head h1{font-size:34px}
+.res-head p{color:var(--muted);margin:4px 0 0}
+.docs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:30px}
+.doc{display:flex;gap:14px;align-items:center;cursor:pointer;transition:border-color .15s}
+.doc:hover{border-color:var(--ink)}
+.doc-ic{width:44px;height:54px;border-radius:6px;background:var(--black);color:#fff;display:grid;place-items:center;font-size:11px;font-family:var(--mono);flex:none}
+.doc b{font-family:var(--display)}
+.doc span{display:block;font-size:13px;color:var(--muted)}
+.doc .go{margin-left:auto;font-family:var(--mono);font-size:13px;white-space:nowrap}
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch}
+.q{display:flex;flex-direction:column;position:relative}
+.q.best{background:var(--black);color:#fff;border-color:var(--black)}
+.q.best li span:first-child,.q.best .q-mo,.q.best .q-note{color:#A3A3A3}
+.q.best li{border-color:#2A2A2A}
+.q .badge-best{position:absolute;top:-11px;left:18px;background:#fff;color:var(--black);border:1px solid var(--black);font-family:var(--mono);font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:99px;letter-spacing:.08em}
+.q-name{font-family:var(--display);font-weight:700;font-size:18px}
+.q-type{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:99px;display:inline-block;margin-top:6px;border:1px solid currentColor;align-self:flex-start;opacity:.8}
+.q-price{font-family:var(--display);font-size:38px;font-weight:700;margin:16px 0 0;letter-spacing:-.03em}
+.q-price small{font-size:14px;opacity:.6;font-weight:500}
+.q-mo{font-size:13px;color:var(--muted);margin-bottom:12px}
+.q ul{list-style:none;padding:0;margin:0 0 16px;font-size:14px;flex:1}
+.q li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);gap:8px}
+.q li span:first-child{color:var(--muted)}
+.q li span:last-child{font-weight:600;text-align:right}
+.q-note{font-size:12px;color:var(--muted);margin:-6px 0 14px}
+.q.declined{opacity:.7;box-shadow:none}
+.q.declined .q-why{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:14px}
+.fine{font-size:12px;color:var(--muted);margin-top:16px}
+.broker{margin-top:36px}
+.broker summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:19px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.broker summary::-webkit-details-marker{display:none}
+.broker .tbl-wrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:14px}
+.broker table{width:100%;border-collapse:collapse;font-size:13px}
+.broker th,.broker td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.broker th{position:sticky;top:0;background:var(--soft);font-weight:600}
+.broker td code{font-family:var(--mono);font-size:11.5px;word-break:break-all}
+.broker-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.flag{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:12px}
+
+/* modal + preview */
+.modal{position:fixed;inset:0;background:rgba(10,10,10,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal.on{display:flex}
+.modal .card{max-width:440px;width:100%}
+.modal .card.doccard{max-width:720px;max-height:88vh;overflow:auto;padding:0}
+.doc-top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:1}
+.paper{padding:28px 32px 34px;font-size:14.5px;color:var(--ink)}
+.paper h2{font-size:22px;margin:4px 0 2px}.paper .meta{color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+.paper p{margin:10px 0;color:var(--ink)}
+.paper table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.paper td{border-bottom:1px solid var(--line);padding:7px 4px;vertical-align:top}.paper td:first-child{color:var(--muted);width:44%}
+.paper .sec-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 4px}
+.paper .signed{display:flex;gap:28px;flex-wrap:wrap;margin-top:18px;align-items:flex-end}
+.paper .signed .sg{font-family:'Great Vibes',cursive;font-size:38px;color:#0D1430;border-bottom:1px solid var(--ink);min-width:220px;line-height:1.2}
+.paper .coi{border:1.5px solid var(--ink);border-radius:4px}
+.paper .coi>div{border-bottom:1px solid var(--ink);padding:8px 10px}.paper .coi>div:last-child{border-bottom:0}
+.paper .coi b{font-size:10px;letter-spacing:.08em;text-transform:uppercase;display:block;color:var(--muted)}
+@media (max-width:520px){.paper{padding:20px 18px 26px}.modal{padding:10px}}
+.phone-btn{position:fixed;right:16px;bottom:16px;z-index:40;box-shadow:var(--shadow)}
+.pv-phone{position:fixed;inset:0;background:rgba(10,10,10,.72);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:60;flex-direction:column;gap:12px;padding:12px}
+.pv-phone.on{display:flex}
+.pv-phone .frame{width:390px;height:min(844px,calc(100vh - 90px));border-radius:44px;border:12px solid #0A0A0A;background:#0A0A0A;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+.pv-phone iframe{width:100%;height:100%;border:0;border-radius:32px;background:#fff}
+@media (max-width:700px){.phone-btn{display:none}}
+body.embed .phone-btn{display:none}
+.ok-ic{width:56px;height:56px;border-radius:50%;background:var(--black);display:grid;place-items:center;margin-bottom:16px}
+.pv{position:fixed;inset:0;background:#0A0A0A;z-index:60;display:none;flex-direction:column;color:#fff}
+.pv.on{display:flex}
+.pv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #222}
+.pv-tabs{display:flex;background:#1A1A1A;border-radius:999px;padding:4px}
+.pv-tabs button{border:0;background:transparent;color:#A3A3A3;padding:7px 14px;border-radius:999px;font-family:var(--mono);font-size:13px}
+.pv-tabs button.on{background:#fff;color:#000}
+.pv-body{flex:1;overflow:auto;padding:20px 12px 60px;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px}
+.pv-page{max-width:860px;margin:0 auto 18px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6);border-radius:4px;overflow:hidden}
+.pv-page canvas{display:block;width:100%;height:auto}
+.pv-label{max-width:860px;margin:0 auto 8px;font-family:var(--mono);font-size:11px;color:#8A8A8A;letter-spacing:.08em}
+.pv-msg{text-align:center;color:#A3A3A3;font-family:var(--mono);font-size:13px;padding:60px 0}
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:var(--black);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;z-index:70;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- motion ---------- */
+.progress{position:fixed;left:0;top:0;height:2px;width:100%;background:#fff;transform-origin:0 50%;transform:scaleX(0);z-index:30;mix-blend-mode:difference}
+.hero .glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(420px circle at var(--mx,72%) var(--my,28%),rgba(255,255,255,.085),transparent 60%);z-index:0}
+.marquee{overflow:hidden;border-bottom:1px solid var(--line);background:#fff;padding:14px 0;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marquee .track{display:flex;gap:10px;width:max-content}
+.marquee .chip{background:var(--bg)}
+.marquee .chip b{font-family:var(--mono);font-weight:400;color:var(--muted);margin-right:6px}
+@media (prefers-reduced-motion:no-preference){
+  .hero .anim{opacity:0;transform:translateY(22px);animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards}
+  .hero .d1{animation-delay:.05s}.hero .d2{animation-delay:.18s}.hero .d3{animation-delay:.31s}.hero .d4{animation-delay:.46s}.hero .d5{animation-delay:.6s}.hero .d6{animation-delay:.75s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .hero:before{animation:gridpan 24s linear infinite}
+  @keyframes gridpan{to{background-position:44px 44px,44px 44px}}
+  .hero h1 .dim{background:linear-gradient(90deg,#6E6E6E 0%,#6E6E6E 40%,#fff 50%,#6E6E6E 60%,#6E6E6E 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards,shine 5s 1.4s ease-in-out infinite}
+  @keyframes shine{0%{background-position:100% 0}60%,100%{background-position:-50% 0}}
+  .phone{animation:float 7s ease-in-out infinite}
+  @keyframes float{50%{transform:translateY(-12px) rotate(-.6deg)}}
+  .ph-send{animation:press 6s ease-in-out infinite}
+  @keyframes press{0%,36%,46%,100%{transform:scale(1)}41%{transform:scale(.95);background:#333}}
+  .ph-toast{animation:toast 6s ease-in-out infinite}
+  @keyframes toast{0%,42%{opacity:0;transform:translateY(8px)}50%,90%{opacity:1;transform:none}100%{opacity:0}}
+  .ph-tag{animation:blink 2.4s steps(1) infinite}
+  @keyframes blink{50%{opacity:.55}}
+  [data-reveal]{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+  [data-reveal].in{opacity:1;transform:none}
+  .card{transition:transform .25s ease,box-shadow .25s ease,border-color .2s}
+  a.card:hover,.steps3 .card:hover,.q:not(.declined):hover,.doc:hover{transform:translateY(-4px);box-shadow:0 2px 4px rgba(0,0,0,.04),0 18px 40px rgba(0,0,0,.1)}
+  .btn .arrow{display:inline-block;transition:transform .2s}
+  .btn:hover .arrow{transform:translateX(4px)}
+  .num:after{transform-origin:0 50%;transform:scaleX(0);transition:transform 1s .3s cubic-bezier(.2,.7,.2,1)}
+  .in .num:after,.num.in:after{transform:scaleX(1)}
+  .marquee .track{animation:marq 38s linear infinite}
+  .marquee:hover .track{animation-play-state:paused}
+  @keyframes marq{to{transform:translateX(-50%)}}
+  .flow-anim{animation:stepin .5s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes stepin{from{opacity:0;transform:translateX(18px)}}
+  .bar i{transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .opt{transition:border-color .12s,background .18s,color .18s,transform .1s}
+  .opt:active{transform:scale(.985)}
+  .sigpad .sig.write{animation:write 1.1s cubic-bezier(.4,0,.2,1) both}
+  @keyframes write{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+  .pv-page{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+  .status i{animation:pulse 2s infinite}
+}
+@media (max-width:860px){
+  .hero-grid,.split{grid-template-columns:1fr}
+  .phone{margin:10px auto 0}
+  .hero h1{font-size:40px}
+  .steps3,.quotes{grid-template-columns:1fr}
+  .quotes{gap:22px}
+}
+@media (max-width:560px){
+  .strip .wrap{grid-template-columns:1fr}
+  .stat{border-left:0;border-top:1px solid var(--line);padding:18px 0}
+  .stat:first-child{border-top:0}
+  .docs,.row2,.opts.cols2{grid-template-columns:1fr}
+  .top nav .hide-sm{display:none}
+  .hero{padding:48px 0 60px}
+  .sec{padding:52px 0}
+  .cta-band{padding:28px}
+  .sigpad .sig{font-size:36px}
+  .pv-top .hide-sm{display:none}
+  .res-head h1{font-size:28px}
+  .broker summary{font-size:17px;gap:10px}
+}
+@media (max-width:400px){
+  .top .wrap{padding:0 14px}
+  .brand{font-size:17px;gap:8px}
+  .brand .mk{width:26px;height:26px}
+  .top nav{gap:6px}
+  .top .btn-sm{padding:7px 11px;font-size:13px}
+  .doc .go{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Bindswift home">
+      <span class="mk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      Bindswift
+    </a>
+    <nav>
+      <span class="pill-proto hide-sm">Prototype</span>
+      <span id="navUser" class="hide-sm" style="font-size:14px;color:#BDBDBD;display:none"></span>
+      <a class="btn btn-ghost btn-sm hide-sm" href="#appetite">Who we insure</a>
+      <a class="btn btn-ghost btn-sm" id="navDash" href="#dashboard" style="display:none">Dashboard</a>
+      <a class="btn btn-ghost btn-sm" id="navLogin" href="#login">Log in</a>
+      <button class="btn btn-ghost btn-sm" id="navLogout" style="display:none">Log out</button>
+      <a class="btn btn-white btn-sm" id="navQuote" href="#quote">Get a quote</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HOME ============ -->
+<main id="v-home" class="view">
+  <section class="hero" id="hero">
+    <div class="glow"></div>
+    <div class="wrap hero-grid">
+      <div>
+        <span class="status tag anim d1"><i></i> General liability · Small &amp; mid-size business</span>
+        <h1><span class="anim d2" style="display:inline-block">Get insured.</span><br><span class="anim d3" style="display:inline-block">Send proof.</span><br><span class="dim anim d4" style="display:inline-block">In minutes, not days.</span></h1>
+        <p class="lead anim d5">Answer plain-language questions on your phone, once. Bindswift fills out the insurance applications for you, matches you with the insurers most likely to say yes, and lets you send a certificate to any landlord, client or GC, any hour.</p>
+        <div class="hero-cta anim d6">
+          <a class="btn btn-white btn-lg" href="#quote">Start my GL quote <span class="arrow">→</span></a>
+          <a class="btn btn-ghost btn-lg" href="#check">Can I get an instant quote?</a>
+        </div>
+        <div class="hero-note anim d6">Free to quote. A flat $50 Bindswift fee applies only when your policy is bound. <a href="#appetite" style="color:#fff">See who we insure →</a></div>
+      </div>
+      <div class="anim d4"><div class="phone" aria-hidden="true">
+        <div class="phone-in">
+          <div class="ph-h tag"><span>06:02</span><span>Bindswift</span></div>
+          <div class="ph-card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><b>General Liability</b><span class="ph-tag">ACTIVE</span></div>
+            <div class="ph-row"><span>Each occurrence</span><span>$1,000,000</span></div>
+            <div class="ph-row"><span>Aggregate</span><span>$2,000,000</span></div>
+            <div class="ph-row"><span>Renews</span><span>in 214 days</span></div>
+          </div>
+          <div class="ph-card">
+            <div class="tag" style="color:var(--muted)">Certificate holder</div>
+            <b>Fulton Street Realty LLC</b>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">Landlord · Additional insured · Primary &amp; non-contributory</div>
+          </div>
+          <div class="ph-send">Send certificate</div>
+          <div class="ph-toast"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m5 12 5 5 9-10" stroke="#0A0A0A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Sent to the landlord · 6:02 AM</div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="strip">
+    <div class="wrap">
+      <div class="stat" data-reveal><b><span data-count="1" data-pre="$" data-suf="M">$1M</span></b><span>per occurrence: the liability limit landlords and clients most often ask to see</span></div>
+      <div class="stat" data-reveal style="--d:.1s"><b><span data-count="12" data-suf=" business types">12 business types</span></b><span>quoted and bound online in minutes, from salons to retail to cafés</span></div>
+      <div class="stat" data-reveal style="--d:.2s"><b>24/7</b><span>certificates sent in seconds, even before your broker's office opens</span></div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="track" id="marq"></div></div>
+
+  <section class="sec" id="how">
+    <div class="wrap">
+      <span class="tag" style="color:var(--muted)" data-reveal>How it works</span>
+      <h2 style="margin-top:8px;--d:.05s" data-reveal>Three steps. One time.</h2>
+      <p class="sub" data-reveal>The paperwork that slows small businesses down, handled once and reused every time a landlord or client asks for proof.</p>
+      <div class="steps3">
+        <div class="card" data-reveal><div class="num">01</div><h3>Answer once</h3><p>Tell us about your business, your team, and your work. No insurance jargon. About 10 minutes.</p></div>
+        <div class="card" data-reveal style="--d:.12s"><div class="num">02</div><h3>We fill and shop</h3><p>Your answers fill the ACORD applications carriers use. We match you to the insurers most likely to quote, and your licensed broker reviews every one.</p></div>
+        <div class="card" data-reveal style="--d:.24s"><div class="num">03</div><h3>Send proof anytime</h3><p>Once you're covered, send a certificate to any landlord, client or GC in seconds. We track your renewal so coverage never lapses.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="check" style="padding-top:0">
+    <div class="wrap">
+      <span class="tag" style="color:var(--muted)" data-reveal>Instant quote check</span>
+      <h2 style="margin-top:8px" data-reveal>Can you get a quote instantly?</h2>
+      <p class="sub" data-reveal>Answer eight quick questions. We'll tell you how likely a business like yours is to be quoted and bound online, and which insurers usually say yes.</p>
+      <div class="checker" data-reveal>
+        <div class="card ck-form" id="ckForm"></div>
+        <div class="ck-out" id="ckOut" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top:0">
+    <div class="wrap split">
+      <div data-reveal>
+        <span class="tag" style="color:var(--muted)">Who it's for</span>
+        <h2 style="margin-top:8px">Built for main street</h2>
+        <p class="sub">Small and mid-size businesses across the five boroughs and Long Island, starting with the ones insurers quote fastest.</p>
+        <div class="tag" style="color:var(--muted);margin-bottom:10px">Quoted in minutes</div>
+        <div class="trades" id="homeFast"></div>
+        <div class="tag" style="color:var(--muted);margin:18px 0 10px">Broker-reviewed</div>
+        <div class="trades" id="homeReview"></div>
+        <p style="margin-top:18px"><a class="btn btn-line" href="#appetite">See our full appetite <span class="arrow">→</span></a></p>
+      </div>
+      <div class="faq" data-reveal style="--d:.12s">
+        <details><summary>Does Bindswift cost extra?</summary><p>Quoting is free. If you decide to buy, there's a flat <b>$50 Bindswift service fee</b>, charged right before your policy is bound. You'll see it on your quote and sign a short fee agreement first. If no policy is bound, you aren't charged. Bindswift also earns the standard commission insurers pay brokers.</p></details>
+        <details><summary>Who is my broker?</summary><p>Bindswift is built by Howard Analytics, a licensed New York property &amp; casualty agency. A real broker reviews every application before it goes to a carrier.</p></details>
+        <details><summary>What if my landlord or GC needs to be listed on the certificate?</summary><p>Tell us during the quote. We'll request additional insured status, plus primary &amp; non-contributory and waiver of subrogation when a contract requires them.</p></details>
+        <details><summary>I've been declined before. Can I still apply?</summary><p>Yes. If standard carriers pass, your broker shops specialty (excess &amp; surplus) markets built for harder-to-place risks.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top:0">
+    <div class="wrap">
+      <div class="cta-band" data-reveal>
+        <div><h2>Ready to get covered?</h2><p>Start your General Liability quote. It takes about 10 minutes and quoting is free.</p></div>
+        <a class="btn btn-white btn-lg" href="#quote">Start my GL quote <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>Bindswift by Howard Analytics · NY Property &amp; Casualty License #1931665</span>
+      <span>Prototype for the LIU Innovation &amp; Venture Challenge. Quotes shown are illustrative.</span>
+    </div>
+  </footer>
+</main>
+
+<!-- ============ LOGIN ============ -->
+<main id="v-login" class="view">
+  <div class="auth">
+    <div class="card auth-card">
+      <span class="tag" style="color:var(--muted)">Bindswift account</span>
+      <h1 id="authTitle" style="margin-top:6px">Welcome back</h1>
+      <div style="color:var(--muted)" id="authSub">Log in to see your quotes and send certificates.</div>
+      <div class="tabs" role="tablist">
+        <button class="on" data-mode="in" type="button">Log in</button>
+        <button data-mode="up" type="button">Create account</button>
+      </div>
+      <form id="authForm" novalidate>
+        <div class="f" id="f-auth-name" style="display:none">
+          <label class="l" for="authName">Your name</label>
+          <input type="text" id="authName" autocomplete="name" placeholder="John Doe">
+          <div class="emsg">Enter your name.</div>
+        </div>
+        <div class="f" id="f-auth-email">
+          <label class="l" for="authEmail">Email</label>
+          <input type="email" id="authEmail" autocomplete="email" placeholder="you@yourbusiness.com">
+          <div class="emsg">Enter a valid email address.</div>
+        </div>
+        <div id="authTs" style="margin-bottom:10px"></div>
+        <div class="f" id="f-auth-code" style="display:none">
+          <label class="l" for="authCode">6-digit code</label>
+          <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+          <div class="emsg">Enter the 6-digit code from your email.</div>
+          <div class="help" style="margin-top:8px"><a href="#" id="authChange">Use a different email</a> · <a href="#" id="authResend">Send a new code</a></div>
+        </div>
+        <div class="help" id="authErr" style="color:var(--bad);display:none"></div>
+        <button class="btn btn-black btn-block btn-lg" type="submit" id="authSubmit">Log in</button>
+      </form>
+      <div class="or">or</div>
+      <button class="btn btn-line btn-block" type="button" id="demoLogin">Continue with demo account</button>
+      <p class="fine" style="text-align:center">No password to remember. We email you a one-time code each time you log in.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ============ DASHBOARD ============ -->
+<main id="v-dashboard" class="view">
+  <div class="wrap dash" id="dash"></div>
+</main>
+
+<!-- ============ APPETITE ============ -->
+<main id="v-appetite" class="view">
+  <div class="wrap dash" id="appet"></div>
+</main>
+
+<!-- ============ QUOTE FLOW ============ -->
+<main id="v-quote" class="view">
+  <div class="flow" id="flow"></div>
+  <div class="flow-nav" id="flowNav">
+    <div class="in">
+      <button class="btn btn-line" id="backBtn" type="button">Back</button>
+      <button class="btn btn-black" id="nextBtn" type="button">Continue</button>
+    </div>
+  </div>
+</main>
+
+<!-- ============ RESULTS ============ -->
+<main id="v-results" class="view">
+  <div class="wrap res" id="results"></div>
+</main>
+
+<!-- ACORD preview -->
+<div class="pv" id="pv" role="dialog" aria-modal="true" aria-label="ACORD preview">
+  <div class="pv-top">
+    <div class="pv-tabs"><button data-form="125" class="on" type="button">ACORD 125</button><button data-form="126" type="button">ACORD 126</button></div>
+    <span class="tag hide-sm" style="color:#8A8A8A">Preview · filled from your answers</span>
+    <button class="btn btn-white btn-sm" id="pvClose" type="button">Close</button>
+  </div>
+  <div class="pv-body" id="pvBody"></div>
+</div>
+
+<input id="hp" name="website_url" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="card" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+<button class="btn btn-black btn-sm phone-btn" type="button" id="phoneBtn">📱 Phone preview</button>
+<div class="pv-phone" id="pvPhone" role="dialog" aria-modal="true" aria-label="Phone preview">
+  <div class="frame"><iframe id="pvFrame" title="Bindswift on a phone"></iframe></div>
+  <button class="btn btn-white btn-sm" type="button" id="pvPhoneClose">Close phone preview</button>
+</div>
+
+<script>
+/* =====================================================================
+   Bindswift prototype. Every price here is a DEMO value, not a filed rate.
+   The ACORD mapping below mirrors backend/app/acord_map.py: keep them in sync.
+   ===================================================================== */
+
+/* Producer block printed on the ACORDs (from your sample submission) */
+/* Producer block for the in-browser PREVIEW only: no personal details on the public page.
+   The backend fills the real producer info (name, phone, email, NPN, signature) on the PDFs
+   your broker actually submits, so the preview intentionally differs there. */
+const PRODUCER = {agency:'Bindswift', address:'99 Wall Street\nNew York, NY 10005', name:'', phone:'', email:'', npn:''};
+
+const TRADES = [
+  {v:'handyman',  l:'Handyman services',          acord:'Handyman Services',      code:'91342', naics:'236118', rate:9.0},
+  {v:'carpentry', l:'Carpentry',                  acord:'Carpentry',              code:'91342', naics:'238350', rate:9.4},
+  {v:'paint_int', l:'Painting — interior',        acord:'Interior Painting',      code:'92478', naics:'238320', rate:6.9},
+  {v:'paint_ext', l:'Painting — exterior',        acord:'Exterior Painting',      code:'92453', naics:'238320', rate:10.8},
+  {v:'electrical',l:'Electrical',                 acord:'Electrical Contractor',  code:'92215', naics:'238210', rate:6.4},
+  {v:'plumbing',  l:'Plumbing',                   acord:'Plumbing Contractor',    code:'98482', naics:'238220', rate:7.8},
+  {v:'hvac',      l:'HVAC',                       acord:'HVAC Contractor',        code:'95647', naics:'238220', rate:6.6},
+  {v:'masonry',   l:'Masonry',                    acord:'Masonry Contractor',     code:'97447', naics:'238140', rate:13.9},
+  {v:'tile',      l:'Tile, stone & marble',       acord:'Tile, Stone & Marble',   code:'99746', naics:'238340', rate:6.8},
+  {v:'drywall',   l:'Drywall',                    acord:'Drywall Contractor',     code:'92338', naics:'238310', rate:8.3},
+  {v:'remodel',   l:'Residential remodeling (GC)',acord:'Residential Remodeling', code:'91583', naics:'236118', rate:11.5},
+  {v:'roofing',   l:'Roofing',                    acord:'Roofing Contractor',     code:'98677', naics:'238160', rate:34.0}
+];
+const COUNTIES = [
+  {v:'Kings',l:'Brooklyn (Kings)',nyc:1},{v:'Queens',l:'Queens',nyc:1},{v:'New York',l:'Manhattan (New York)',nyc:1},
+  {v:'Bronx',l:'Bronx',nyc:1},{v:'Richmond',l:'Staten Island (Richmond)',nyc:1},
+  {v:'Nassau',l:'Nassau',nyc:0},{v:'Suffolk',l:'Suffolk',nyc:0},{v:'Westchester',l:'Westchester',nyc:0},{v:'Other',l:'Other',nyc:0}
+];
+const BOROUGHS = ['Brooklyn','Queens','Manhattan','Bronx','Staten Island','Long Island','Westchester'];
+const OPS_CHECKS = [
+  {v:'design',l:'We draw plans, designs or specs for others'},
+  {v:'blasting',l:'Blasting, or storing explosives'},
+  {v:'excavation',l:'Excavation, tunneling, underground work or earth moving'},
+  {v:'demolition',l:'Demolition'},
+  {v:'structural',l:'Structural alterations (load-bearing walls, beams, foundations)'},
+  {v:'hazmat',l:'Hazardous materials (asbestos, lead abatement, fuel tanks)'},
+  {v:'flammables',l:'Flammables or chemicals beyond normal paint and solvents'},
+  {v:'leaseequip',l:'We rent or lease our equipment to others'},
+  {v:'leaseemp',l:'We lease workers to or from other companies'},
+  {v:'jv',l:'Joint ventures with other contractors'},
+  {v:'drones',l:'We own, operate or hire drones'},
+  {v:'otherbiz',l:'The owner has other businesses we are not insuring here'},
+  {v:'parent',l:'This business is owned by another company'},
+  {v:'violations',l:'Open (uncorrected) fire or safety code violations'}
+];
+const LIMITS = [
+  {v:'1/2', l:'$1M per occurrence / $2M aggregate', occ:1000000, agg:2000000, f:1.00, small:'Meets the NYC permit minimum'},
+  {v:'2/4', l:'$2M per occurrence / $4M aggregate', occ:2000000, agg:4000000, f:1.42, small:'Some GCs and commercial jobs ask for this'}
+];
+
+const STEPS = [
+ {id:'biz', title:'About your business', sub:'Use the name exactly as it appears on your business registration.', fields:[
+   {id:'legalName', label:'Legal business name', type:'text', req:1, ph:'Doe Home Services Inc.', help:'Exactly as registered with New York State, including Inc., Corp. or LLC.'},
+   {id:'dba', label:'DBA / trade name', type:'text', ph:'If you have one'},
+   {id:'entity', label:'Business type', type:'radio', req:1, cols:2, opts:[
+     {v:'LLC',l:'LLC'},{v:'Corporation',l:'Corporation'},{v:'SCorp',l:'S corporation'},{v:'Individual',l:'Sole proprietor'},{v:'Partnership',l:'Partnership'},{v:'JointVenture',l:'Joint venture'}]},
+   {id:'bizCheck', label:'Find your state registration', type:'bizcheck', req:1, show:a=>a.entity&&!['Individual','JointVenture'].includes(a.entity)},
+   {id:'members', label:'How many LLC members?', type:'int', ph:'1', show:a=>a.entity==='LLC'},
+   {id:'fein', label:'FEIN (federal tax ID)', type:'text', ph:'12-3456789', help:'Optional for a quote. Your broker needs it before binding.', fmt:'fein'},
+   {id:'started', label:'When did the business start?', type:'date', req:1}
+ ]},
+ {id:'contact', title:'How we reach you', sub:'We text you when your quote is ready and when a certificate is sent.', fields:[
+   {id:'contactName', label:'Your name', type:'text', req:1, ph:'John Doe'},
+   {id:'contactTitle', label:'Your role', type:'select', req:1, opts:[{v:'Owner',l:'Owner'},{v:'Partner',l:'Partner'},{v:'Office manager',l:'Office manager'},{v:'Other',l:'Other'}]},
+   {id:'phone', label:'Mobile phone', type:'tel', req:1, ph:'(718) 555-0142', fmt:'phone'},
+   {id:'email', label:'Email', type:'email', req:1, ph:'john.doe@example.com'},
+   {id:'emailVerify', label:'Verify your email', type:'emailverify', req:1},
+   {id:'website', label:'Website', type:'text', ph:'If you have one'}
+ ]},
+ {id:'addr', title:'Business address', sub:'Where the business is based. Job sites come later.', fields:[
+   {id:'street', label:'Street address', type:'text', req:1, ph:'412 Atlantic Ave'},
+   {id:'city', label:'City', type:'text', req:1, ph:'Brooklyn', half:1},
+   {id:'zip', label:'ZIP', type:'text', req:1, ph:'11217', half:1, fmt:'zip'},
+   {id:'county', label:'County / borough', type:'select', req:1, opts:COUNTIES},
+   {id:'premises', label:'Your office or shop is…', type:'radio', req:1, opts:[
+     {v:'Owner',l:'Owned by the business'},{v:'Tenant',l:'Rented'},{v:'Home',l:'Run from my home',small:'No separate office or shop'}]},
+   {id:'cityLimits', label:'Is this address inside the limits of a city or incorporated village?', type:'radio', req:1, cols:2,
+     help:'Your tax bill or village website will say. Many Long Island hamlets are outside village limits.',
+     show:a=>a.county&&!county(a).nyc, opts:[{v:'Inside',l:'Inside'},{v:'Outside',l:'Outside'}]}
+ ]},
+ {id:'work', title:'Your work', sub:'This decides your classification, the biggest driver of your price.', fields:[
+   {id:'trade', label:'Main trade', type:'select', req:1, opts:TRADES},
+   {id:'opsDesc', label:'Describe the work you do', type:'textarea', req:1, ph:'Painting, renovating, flooring, electrical fixtures, light plumbing.', help:'A sentence or two, the way you would tell a customer.'},
+   {id:'offsitePct', label:'How much of your work happens at customers\' properties?', type:'radio', req:1, cols:2, opts:[
+     {v:'100',l:'All of it'},{v:'75',l:'Most of it'},{v:'50',l:'About half'},{v:'25',l:'A little'}]},
+   {id:'height', label:'Tallest building you work on', type:'radio', req:1, cols:2, opts:[
+     {v:'1-3',l:'1 to 3 stories'},{v:'4-6',l:'4 to 6 stories'},{v:'7+',l:'7 stories or more'},{v:'ext7',l:'Outside work above 3 stories'}]},
+   {id:'areas', label:'Where do you work?', type:'checks', req:1, cols:2, opts:BOROUGHS.map(b=>({v:b,l:b}))}
+ ]},
+ {id:'crew', title:'Your team and revenue', sub:'Estimates for the next 12 months are fine.', fields:[
+   {id:'ft', label:'Full-time employees', type:'int', req:1, ph:'1', half:1},
+   {id:'pt', label:'Part-time employees', type:'int', req:1, ph:'0', half:1},
+   {id:'revenue', label:'Annual revenue', type:'money', req:1, ph:'75,000'},
+   {id:'payroll', label:'Annual payroll (not counting the owner)', type:'money', req:1, ph:'40,000'},
+   {id:'subCost', label:'Paid to subcontractors per year', type:'money', req:1, ph:'0', help:'Enter 0 if your own team does all the work.'},
+   {id:'subPct', label:'About what % of your work is subcontracted?', type:'int', ph:'10', show:a=>num(a.subCost)>0},
+   {id:'subWork', label:'What kind of work do you sub out?', type:'text', ph:'Licensed electrical and plumbing', show:a=>num(a.subCost)>0},
+   {id:'subsInsured', label:'Do all your subs give you a certificate with limits at least as high as yours?', type:'yesno', req:1, show:a=>num(a.subCost)>0}
+ ]},
+ {id:'cov', title:'Coverage you need', sub:'General Liability covers injuries or property damage you cause on a job.', fields:[
+   {id:'effDate', label:'When should coverage start?', type:'date', req:1},
+   {id:'limits', label:'Limits', type:'radio', req:1, opts:LIMITS},
+   {id:'payPlan', label:'How would you like to pay?', type:'radio', req:1, cols:2, opts:[{v:'Monthly',l:'Monthly'},{v:'Annual',l:'Pay in full'}]},
+   {id:'gcReq', label:'Does anyone need to be listed on your policy?', type:'yesno', req:1, help:'A landlord, GC or building owner (additional insured), a lender on your equipment or truck (lienholder or loss payee), or a mortgage company.'},
+   {id:'interests', label:'Who needs to be listed?', type:'interests', req:1, show:a=>a.gcReq==='Y'}
+ ]},
+ {id:'hist', title:'Insurance history', sub:'Carriers check this, so accurate answers keep your price from changing later.', fields:[
+   {id:'insured', label:'Do you have General Liability coverage now?', type:'yesno', req:1},
+   {id:'priorCarrier', label:'Current insurance company', type:'text', ph:'Company name', show:a=>a.insured==='Y'},
+   {id:'priorPolicy', label:'Policy number', type:'text', ph:'If you have it', show:a=>a.insured==='Y', half:1},
+   {id:'priorExp', label:'Expiration date', type:'date', show:a=>a.insured==='Y', half:1},
+   {id:'losses', label:'Claims or lawsuits in the last 5 years', type:'radio', req:1, cols:2, opts:[{v:'0',l:'None'},{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3 or more'}]},
+   {id:'lossDesc', label:'What happened?', type:'textarea', ph:'03/2024: water damage to a downstairs unit during a bathroom remodel. Closed.', show:a=>num(a.losses)>0},
+   {id:'lossPaid', label:'Total paid on those claims (best guess)', type:'money', show:a=>num(a.losses)>0},
+   {id:'cancelled', label:'In the last 3 years, has an insurer declined, cancelled or refused to renew your coverage?', type:'yesno', req:1},
+   {id:'cancelWhy', label:'Why?', type:'radio', show:a=>a.cancelled==='Y', opts:[
+     {v:'NonPayment',l:'Missed payment'},{v:'NonRenewal',l:'Insurer chose not to renew'},{v:'AgentStopRepresenting',l:'Agent stopped working with that insurer'},{v:'Underwriting',l:'Underwriting reasons'}]}
+ ]},
+ {id:'ops', title:'Safety and operations', sub:'Most small businesses answer no to almost all of these.', fields:[
+   {id:'install', label:'Do you install, service or repair products (fixtures, flooring, units)?', type:'yesno', req:1},
+   {id:'installDesc', label:'What do you install?', type:'text', ph:'Flooring, light fixtures, cabinets', show:a=>a.install==='Y'},
+   {id:'safety', label:'Do you have a written safety program?', type:'yesno', req:1, help:'A safety manual, toolbox talks, or OSHA training counts.'},
+   {id:'osha', label:'Has your team done OSHA or NYC SST training?', type:'yesno', show:a=>a.safety==='Y'},
+   {id:'holdHarmless', label:'Do you sign contracts with hold-harmless or warranty terms?', type:'yesno', req:1},
+   {id:'opsChecks', label:'Check any that apply, past or present', type:'checklist', opts:OPS_CHECKS},
+   {id:'opsExplain', label:'Tell us more about what you checked', type:'textarea', show:a=>(a.opsChecks||[]).length>0}
+ ]},
+ {id:'legal', title:'A few legal questions', sub:'Every commercial application asks these. Answer for the business and its owners.', fields:[
+   {id:'bankrupt', label:'Foreclosure, repossession or bankruptcy in the last 5 years?', type:'yesno', req:1},
+   {id:'judgment', label:'A judgment or lien against the business in the last 5 years?', type:'yesno', req:1},
+   {id:'abuseClaims', label:'Any claims for sexual abuse, discrimination or negligent hiring?', type:'yesno', req:1},
+   {id:'fraud', label:'In the last 5 years, has any owner been charged with or convicted of fraud, bribery or arson?', type:'yesno', req:1},
+   {id:'legalExplain', label:'Please explain', type:'textarea', show:a=>['bankrupt','judgment','abuseClaims','fraud'].some(k=>a[k]==='Y')}
+ ]},
+ {id:'review', title:'Review and sign', sub:'Check your answers, preview your applications, then sign.', review:1, fields:[
+   {id:'signature', label:'Type your full legal name to sign', type:'signature', req:1, ph:'John Doe'},
+   {id:'feeAgree', label:'Bindswift service fee', type:'feeagreement', req:1},
+   {id:'attest', label:'I confirm these answers are true and complete, and I adopt the signature above as my electronic signature on the ACORD 125 and 126. I understand that knowingly giving false information on an insurance application is a crime in New York.', type:'consent', req:1}
+ ]}
+];
+
+const SAMPLE = {
+  legalName:'Doe Home Services Inc.', dba:'', entity:'SCorp', members:'', fein:'00-0000000', started:'2021-03-01',
+  contactName:'John Doe', contactTitle:'Owner', phone:'(516) 555-0100', email:'john.doe@example.com', website:'',
+  street:'123 Main St', city:'Freeport', zip:'11520', county:'Nassau', premises:'Home', cityLimits:'Inside',
+  trade:'handyman', opsDesc:'Painting, renovating, flooring, electrical fixtures and light plumbing in 1–3 family homes.',
+  offsitePct:'100', height:'1-3', areas:['Long Island','Queens','Brooklyn'],
+  ft:'2', pt:'1', revenue:'180000', payroll:'72000', subCost:'0',
+  interests:[{type:'AdditionalInsured',name:'Example Builders LLC',street:'90 Sample Ave',city:'Brooklyn',state:'NY',zip:'11217',ref:'Job 1001',cert:true},
+             {type:'Lienholder',name:'Example Equipment Finance',street:'500 Demo Blvd',city:'Garden City',state:'NY',zip:'11530',ref:'LN-0001',cert:true}],
+  limits:'1/2', payPlan:'Monthly', gcReq:'Y', insured:'N', losses:'0', cancelled:'N',
+  install:'Y', installDesc:'Flooring, light fixtures, cabinets', safety:'Y', osha:'Y', holdHarmless:'Y', opsChecks:[],
+  bankrupt:'N', judgment:'N', abuseClaims:'N', fraud:'N', signature:'John Doe', feeAgree:true, attest:true
+};
+
+/* ---------- state + helpers ---------- */
+const S = {user:null, a:{}, step:0, result:null, authMode:'in'};
+const store = {
+  get(k){try{return JSON.parse(localStorage.getItem('cc_'+k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem('cc_'+k,JSON.stringify(v))}catch(e){}},
+  del(k){try{localStorage.removeItem('cc_'+k)}catch(e){}}
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function num(v){const n=parseFloat(String(v==null?'':v).replace(/[^0-9.]/g,''));return isNaN(n)?0:n}
+const usd = n => '$'+Math.round(n).toLocaleString('en-US');
+const fmt = n => Math.round(n).toLocaleString('en-US');
+function localISO(d){return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return localISO(d)}
+function mdy(iso){if(!iso)return '';const [y,m,d]=iso.split('-');return `${m}/${d}/${y}`}
+function plusYear(iso){if(!iso)return '';const [y,m,d]=iso.split('-');return `${m}/${d}/${+y+1}`}
+function today(){return mdy(localISO(new Date()))}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200)}
+const trade = a => TRADES.find(t=>t.v===a.trade)||TRADES[0];
+const county = a => COUNTIES.find(c=>c.v===a.county)||{};
+function optLabel(f,v){const o=(f.opts||[]).find(o=>o.v===v);return o?o.l:v}
+
+/* ---------- router ---------- */
+const ROUTES=['home','login','quote','results','dashboard','appetite'];
+function route(){
+  let r=location.hash.replace('#','')||'home';
+  if(r==='how'||r==='check'){show('home');setTimeout(()=>document.getElementById(r).scrollIntoView({behavior:'smooth'}),30);return}
+  if(!ROUTES.includes(r)) r='home';
+  if((r==='quote'||r==='results'||r==='dashboard')&&!S.user){S.after=r;location.hash='login';return}
+  if(r==='results'&&!S.result){location.hash='quote';return}
+  show(r);
+}
+function show(r){
+  ROUTES.forEach(x=>document.getElementById('v-'+x).classList.toggle('on',x===r));
+  $('#flowNav').style.display=r==='quote'?'':'none';
+  if(r==='quote') renderStep();
+  if(r==='results') renderResults();
+  if(r==='home') reveal();
+  if(r==='login') renderAuth();
+  if(r==='dashboard') renderDash();
+  if(r==='appetite') renderAppetite();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+
+/* ---------- auth ---------- */
+function setUser(u){
+  S.user=u; if(u) store.set('user',u); else store.del('user');
+  $('#navLogin').style.display=u?'none':'';
+  $('#navLogout').style.display=u?'':'none';
+  $('#navDash').style.display=u?'':'none';
+  document.body.classList.toggle('authed',!!u);
+  const nu=$('#navUser'); nu.style.display=u?'':'none'; nu.textContent=u?u.name:'';
+}
+const L={stage:'email',email:'',name:'',busy:false,err:'',tsId:null};
+function renderAuth(){
+  const up=S.authMode==='up', code=L.stage==='code';
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.authMode));
+  $('#f-auth-name').style.display=up&&!code?'':'none';
+  $('#f-auth-code').style.display=code?'':'none';
+  $('#f-auth-email').style.display=code?'none':'';
+  $('#authTitle').textContent=code?'Check your email':up?'Create your account':'Welcome back';
+  $('#authSub').textContent=code?`We sent a 6-digit code to ${L.email}. It expires in 10 minutes.`
+    :up?'Save your answers once and reuse them every renewal.':'Log in to see your quotes, policies and documents.';
+  $('#authSubmit').textContent=L.busy?'One moment…':code?'Log in':'Email me a login code';
+  $('#authSubmit').disabled=L.busy;
+  const e=$('#authErr'); e.style.display=L.err?'':'none'; e.textContent=L.err;
+  const ts=$('#authTs');
+  if(!code&&LIVE.on&&LIVE.cfg.turnstileSiteKey&&window.turnstile&&L.tsId==null) L.tsId=turnstile.render(ts,{sitekey:LIVE.cfg.turnstileSiteKey});
+  if(code) setTimeout(()=>$('#authCode').focus(),30);
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{S.authMode=b.dataset.mode;L.stage='email';L.err='';renderAuth()}));
+$('#authChange').addEventListener('click',e=>{e.preventDefault();L.stage='email';L.err='';renderAuth()});
+$('#authResend').addEventListener('click',e=>{e.preventDefault();sendLoginCode(true)});
+async function sendLoginCode(resend){
+  if(!LIVE.on){L.stage='code';L.err='';renderAuth();toast('Demo: any 6 digits work');return}
+  L.busy=true;L.err='';renderAuth();
+  try{
+    const ts=window.turnstile&&L.tsId!=null?turnstile.getResponse(L.tsId):'';
+    const {status,j}=await api('/api/verify/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:L.email,turnstile:ts||''})});
+    if(status===200){L.stage='code';if(resend)toast('New code sent')}else L.err=j.error||'We couldn\'t send a code.';
+  }catch(e){L.err='Could not reach Bindswift. Try again.'}
+  L.busy=false;renderAuth();
+}
+function afterLogin(){
+  if(S.authMode==='up'&&L.name) S.a.contactName=S.a.contactName||L.name;
+  S.a.email=S.a.email||L.email;
+  if(LIVE.on){V.email=L.email;V.session=true}
+  L.stage='email';
+  location.hash=S.after||'dashboard'; S.after=null;
+}
+$('#authForm').addEventListener('submit',async e=>{
+  e.preventDefault(); L.err='';
+  if(L.stage==='email'){
+    const up=S.authMode==='up',name=$('#authName').value.trim(),email=$('#authEmail').value.trim().toLowerCase();
+    const bad={name:up&&!name,email:!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)};
+    $('#f-auth-name').classList.toggle('err',bad.name);$('#f-auth-email').classList.toggle('err',bad.email);
+    if(bad.name||bad.email) return;
+    L.email=email;L.name=name;await sendLoginCode(false);return;
+  }
+  const code=$('#authCode').value.replace(/\D/g,'');
+  $('#f-auth-code').classList.toggle('err',code.length!==6); if(code.length!==6) return;
+  if(!LIVE.on){setUser({name:L.name||L.email.split('@')[0].replace(/[._]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),email:L.email,demo:true});$('#authCode').value='';afterLogin();return}
+  L.busy=true;renderAuth();
+  try{
+    const {status,j}=await api('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:L.email,code})});
+    if(status===200){$('#authCode').value='';const me=await loadMe();setUser({name:(me&&me.name)||L.name||L.email.split('@')[0],email:L.email});L.busy=false;afterLogin();return}
+    L.err=j.error||'That code isn\'t right.';
+  }catch(e){L.err='Could not reach Bindswift. Try again.'}
+  L.busy=false;renderAuth();
+});
+$('#demoLogin').addEventListener('click',()=>{setUser({name:'John Doe',email:'john.doe@example.com',demo:true});location.hash=S.after||'dashboard';S.after=null});
+$('#navLogout').addEventListener('click',async()=>{
+  if(LIVE.on&&S.user&&!S.user.demo){try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}}
+  setUser(null);S.result=null;D.me=null;V.session=false;location.hash='home';toast('Logged out')});
+
+/* ---------- dashboard ---------- */
+const D={me:null,busy:false,err:''};
+async function loadMe(){
+  try{const r=await fetch('/api/me');if(r.status!==200) return null;D.me=await r.json();return D.me}catch(e){return null}
+}
+const fmtDate=d=>{if(!d)return'';const x=new Date(String(d).length===10?d+'T12:00:00':d);return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+const usd2=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function demoDash(){
+  const name=S.user.name||'John Doe', biz=S.a.legalName||'Doe Home Services Inc.';
+  return {demo:true,name,email:S.user.email,
+    business:{legalName:biz,entity:S.a.entity||'Corporation',regState:S.a.regState||'NY',regStatus:'verified',regName:biz.toUpperCase(),regId:'6123457'},
+    applications:[{ref:'demo',business:biz,status:'quoted',statusText:'Quote ready',submitted:'2026-11-12',effective:'2026-11-20'}],
+    quotes:[{id:1,carrier:'Harborline Mutual',amount:1842,isTotal:false,limits:'$1M per occurrence / $2M aggregate',starts:'2026-11-20',expires:'2026-11-26',status:'Ready to review',link:'#demo-quote'}],
+    policies:[{id:1,carrier:'Brightwater Specialty',number:'BWS-GL-0042817',starts:'2025-11-20',ends:'2026-11-20',occurrence:'$1,000,000',aggregate:'$2,000,000',status:'active',certificatesOn:true,certificates:3,certLink:'#demo-cert'}],
+    documents:[{title:'Your application answers',group:'Application',date:'2026-11-12',url:'#demo-answers'},
+      {title:'ACORD 125 (commercial application)',group:'Application',date:'2026-11-12',url:'#demo-125'},
+      {title:'ACORD 126 (general liability section)',group:'Application',date:'2026-11-12',url:'#demo-126'},
+      {title:'Bindswift service fee agreement',group:'Application',date:'2026-11-12',url:'#demo-fee'},
+      {title:'Quote summary: Harborline Mutual',group:'Quotes',date:'2026-11-13',url:'#demo-quotesum'},
+      {title:'Certificate BSW-0001-00003: Fulton Street Realty LLC',group:'Certificates',date:'2026-11-02',url:'#demo-coi'}]};
+}
+async function renderDash(){
+  const el=$('#dash');
+  if(LIVE.on&&!S.user.demo){
+    el.innerHTML='<div class="empty" style="padding:40px 0">Loading your dashboard…</div>';
+    const me=await loadMe();
+    if(!me){setUser(null);S.after='dashboard';location.hash='login';return}
+    drawDash(me);
+  } else drawDash(demoDash());
+}
+function drawDash(m){
+  const first=String(m.name||'').split(' ')[0]||'there', b=m.business;
+  const REG=REGISTRIES[(b&&b.regState)||'NY'];
+  const regLine=!b?'':b.regStatus==='verified'?`<span class="pill ok">Verified</span> ${esc(REG.short)} record${b.regId?' · '+esc(REG.idLabel)+' '+esc(b.regId):''}`
+    :b.regStatus==='manual_check'?`<span class="pill">Broker checking</span> ${esc(REG.short)} record`
+    :b.regStatus?`<span class="pill">${esc(String(b.regStatus).replace('_',' '))}</span> Your broker will confirm your registration`:'';
+  const quotes=m.quotes.length?m.quotes.map(q=>`<div class="item"><div><div class="t">${esc(q.carrier)} <span class="pill ${q.status==='Bound'?'ok':q.status==='Ready to review'?'dark':''}">${esc(q.status)}</span></div>
+      <div class="s">${q.amount?(q.isTotal?usd2(q.amount)+' total due':usd(q.amount)+'/yr'):'See details'}${q.limits?' · '+esc(q.limits):''}</div>
+      <div class="s">${q.starts?'Starts '+fmtDate(q.starts):''}${q.expires&&q.status==='Ready to review'?' · Quote valid until '+fmtDate(q.expires):''}</div></div>
+      <div class="acts">${q.link?`<a class="btn btn-black btn-sm" href="${esc(q.link)}" data-dl="${esc(q.link)}">View &amp; bind</a>`:''}</div></div>`).join('')
+    :'<div class="empty">No quotes yet. Your broker will email you when one is ready.</div>';
+  const pols=m.policies.length?m.policies.map(p=>`<div class="item"><div><div class="t">General Liability · ${esc(p.carrier)} <span class="pill ${p.status==='active'?'ok':''}">${esc(p.status)}</span></div>
+      <div class="s">Policy ${esc(p.number||'pending')} · ${fmtDate(p.starts)} – ${fmtDate(p.ends)}</div>
+      <div class="s">${esc(p.occurrence||'')}${p.aggregate?' per occurrence / '+esc(p.aggregate)+' aggregate':''} · ${p.certificates} certificate${p.certificates===1?'':'s'} sent</div></div>
+      <div class="acts">${p.certLink?`<a class="btn btn-black btn-sm" href="${esc(p.certLink)}" data-dl="${esc(p.certLink)}">Send a certificate</a>`:'<span class="s">Certificates turn on once your broker confirms the policy</span>'}</div></div>`).join('')
+    :'<div class="empty">No policies yet. Once you bind a quote, it shows up here.</div>';
+  const apps=m.applications.length?m.applications.map(a=>`<div class="item"><div><div class="t">${esc(a.business)}</div><div class="s">Submitted ${fmtDate(a.submitted)}${a.effective?' · coverage wanted from '+fmtDate(a.effective):''}</div></div>
+      <div class="acts"><span class="pill ${a.status==='bound'?'ok':''}">${esc(a.statusText)}</span></div></div>`).join('')
+    :'<div class="empty">You haven\'t applied yet.</div>';
+  const groups=['Application','Quotes','Certificates'];
+  const docs=m.documents.length?groups.map(g=>{const ds=m.documents.filter(d=>d.group===g);if(!ds.length)return'';
+      return `<div class="tag" style="color:var(--muted);margin:12px 0 2px">${g}</div>`+ds.map(d=>`<div class="doc"><span>${esc(d.title)}<br><small style="color:var(--muted)">${fmtDate(d.date)}</small></span>
+        <a class="btn btn-line btn-sm" href="${esc(d.url)}" data-dl="${esc(d.url)}">${m.demo?'View':'PDF ↓'}</a></div>`).join('')}).join('')
+    :'<div class="empty">Your applications, quotes and certificates will appear here.</div>';
+  $('#dash').innerHTML=`<span class="tag" style="color:var(--muted)">Dashboard${m.demo?' · demo data':''}</span>
+    <h1 style="margin-top:6px">Hi ${esc(first)}</h1>
+    ${b?`<div class="biz-line" style="color:var(--muted);margin-top:4px"><b style="color:var(--ink)">${esc(b.legalName)}</b>${regLine?`<div style="margin-top:4px">${regLine}</div>`:''}</div>`:''}
+    <div style="margin-top:8px;font-size:14px"><a href="#" id="dashLogout" style="color:var(--muted)">Log out</a></div>
+    <div class="start"><div><h2>Start a quote</h2><p>${m.applications.length?'Need coverage for another business or a renewal? Your answers are saved.':'About 10 minutes. Free to quote.'}</p></div>
+      <a class="btn btn-white btn-lg" href="#quote" id="dashStart">Start a quote <span class="arrow">→</span></a></div>
+    <div class="dash-grid">
+      <div class="card"><h3>Current quotes <span class="count">${m.quotes.length}</span></h3>${quotes}</div>
+      <div class="card"><h3>Current policies <span class="count">${m.policies.length}</span></h3>${pols}</div>
+      <div class="card"><h3>Applications <span class="count">${m.applications.length}</span></h3>${apps}</div>
+      <div class="card"><h3>Documents <span class="count">${m.documents.length}</span></h3>${docs}</div>
+    </div>`;
+  $('#dashStart').addEventListener('click',()=>{S.step=0});
+  $('#dashLogout').addEventListener('click',e=>{e.preventDefault();$('#navLogout').click()});
+}
+$('#dash').addEventListener('click',e=>{
+  const a=e.target.closest('[data-dl]'); if(!a) return;
+  const u=a.dataset.dl; if(!u.startsWith('#demo')) return;
+  e.preventDefault();
+  const da=Object.keys(S.a).length>3?S.a:SAMPLE;
+  if(u==='#demo-125'||u==='#demo-126'){openPreview(buildAcord(da));return}
+  if(DOCS[u]){openDoc(DOCS[u](da));return}
+  toast({'#demo-quote':'On the live site this opens the insurer\'s quote with a bind button.','#demo-cert':'On the live site this opens your certificate page: holder, address, send.'}[u]||'On the live site this downloads the PDF.');
+});
+
+/* ---------- document previews (demo) ---------- */
+function openDoc(d){
+  $('#modalBody').className='card doccard';
+  $('#modalBody').innerHTML=`<div class="doc-top"><b>${esc(d.title)}</b><button class="btn btn-line btn-sm" type="button" id="closeModal">Close</button></div><div class="paper">${d.html}</div>`;
+  $('#modal').classList.add('on'); $('#closeModal').addEventListener('click',closeDoc);
+}
+function closeDoc(){$('#modal').classList.remove('on');$('#modalBody').className='card'}
+const signedOn=()=>new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+const DOCS={
+  '#demo-fee':a=>{
+    const paras=feeAgreementText(a).split('\n');
+    return {title:'Bindswift service fee agreement',html:`<div class="meta">BINDSWIFT · SERVICE FEE AGREEMENT · ${esc(FEE.version)}</div>
+      <h2>Broker service fee: $${FEE.amount}.00</h2>
+      ${paras.map(p=>{const i=p.indexOf(': ');return i>0&&i<22?`<p><b>${esc(p.slice(0,i))}:</b> ${esc(p.slice(i+2))}</p>`:`<p>${esc(p)}</p>`}).join('')}
+      <p style="color:var(--muted);font-size:13px">Required under New York Insurance Law §2119: a broker fee must be agreed in writing, with the amount stated, before it's charged. Bindswift keeps this signed copy for at least three years.</p>
+      <div class="signed"><div><div class="sg">${esc(a.signature||a.contactName||'John Doe')}</div><small style="color:var(--muted)">Signed electronically by ${esc(a.contactName||'John Doe')}, ${esc(a.contactTitle||'Owner')}</small></div>
+        <div><b>${signedOn()}</b><br><small style="color:var(--muted)">Date</small></div></div>`};
+  },
+  '#demo-answers':a=>{
+    const rows=[];STEPS.forEach(st=>st.fields.filter(f=>(!f.show||f.show(a))&&!['signature','consent','feeagreement','emailverify','bizcheck','interests','checklist'].includes(f.type)).forEach(f=>{
+      let v=a[f.id]; if(v===undefined||v===''||v===null) return;
+      if(f.fmt==='fein') v='XX-XXX'+String(v).replace(/\D/g,'').slice(-4);
+      else if(Array.isArray(v)) v=v.map(x=>optLabel(f,x)).join(', ');
+      else if(f.type==='yesno') v=v==='Y'?'Yes':'No';
+      else if(f.type==='money') v=usd(num(v));
+      else if(f.opts) v=optLabel(f,v);
+      rows.push([st.title,f.label,String(v)])}));
+    let last='',h=`<div class="meta">BINDSWIFT · APPLICATION ANSWERS</div><h2>${esc(a.legalName)}</h2><p style="color:var(--muted)">Your FEIN is masked here. The full number is only on the encrypted applications your broker submits.</p>`;
+    rows.forEach(([sec,l,v])=>{if(sec!==last){h+=(last?'</table>':'')+`<div class="sec-h">${esc(sec)}</div><table>`;last=sec}h+=`<tr><td>${esc(l)}</td><td>${esc(v)}</td></tr>`});
+    return {title:'Your application answers',html:h+'</table>'};
+  },
+  '#demo-quotesum':a=>({title:'Quote summary: Harborline Mutual',html:`<div class="meta">BINDSWIFT · QUOTE SUMMARY · DEMO</div><h2>${esc(a.legalName)}</h2>
+    <p style="color:var(--muted)">Harborline Mutual · Admitted · General Liability (Occurrence)</p>
+    <table><tr><td>Policy period</td><td>11/20/2026 – 11/20/2027</td></tr><tr><td>Each occurrence</td><td>$1,000,000</td></tr><tr><td>General aggregate</td><td>$2,000,000</td></tr>
+    <tr><td>Products / completed operations</td><td>$2,000,000</td></tr><tr><td>Personal &amp; advertising injury</td><td>$1,000,000</td></tr><tr><td>Damage to rented premises</td><td>$100,000</td></tr><tr><td>Medical expense</td><td>$5,000</td></tr></table>
+    <div class="sec-h">Price</div><table><tr><td>Premium</td><td>$1,742.00</td></tr><tr><td>Policy fee</td><td>$100.00</td></tr><tr><td><b>Total due to the insurer</b></td><td><b>$1,842.00</b></td></tr>
+    <tr><td>Bindswift service fee (charged once, at binding)</td><td>$${FEE.amount}.00</td></tr></table>
+    <p style="color:var(--muted);font-size:13px">Demo figures. The insurer's quote and the policy control the actual terms. Coverage isn't in force until your broker confirms it's bound.</p>`}),
+  '#demo-coi':a=>({title:'Certificate BSW-0001-00003',html:`<div class="meta">CERTIFICATE OF LIABILITY INSURANCE · BSW-0001-00003 · DEMO</div>
+    <p style="font-size:12px;color:var(--muted)">Issued as a matter of information only. It confers no rights on the certificate holder and doesn't change the policy.</p>
+    <div class="coi"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><b>Producer</b>Bindswift<br>99 Wall Street, New York, NY 10005</div><div><b>Insured</b>${esc(a.legalName)}<br>${esc(a.street||'')}, ${esc(a.city||'')}, NY ${esc(a.zip||'')}</div></div>
+      <div><b>Insurer</b>Brightwater Specialty</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><b>Policy</b>BWS-GL-0042817</div><div><b>Effective</b>11/20/2025</div><div><b>Expires</b>11/20/2026</div></div>
+      <div><b>Commercial general liability · Occurrence</b>Each occurrence $1,000,000 · General aggregate $2,000,000 · Products/completed ops $2,000,000</div>
+      <div><b>Description of operations</b>${esc(a.opsDesc||'')} The certificate holder is additional insured where required by written contract, per the policy's blanket endorsement.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><b>Certificate holder</b>Fulton Street Realty LLC<br>200 Example St, Brooklyn, NY 11201</div><div><b>Authorized representative</b><span style="font-family:'Great Vibes',cursive;font-size:28px">Bindswift</span></div></div></div>`})
+};
+
+/* ---------- phone preview ---------- */
+if(new URLSearchParams(location.search).has('embed')) document.body.classList.add('embed');
+$('#phoneBtn').addEventListener('click',()=>{
+  const u=new URL(location.href); u.searchParams.set('embed','1');
+  $('#pvFrame').src=u.toString(); $('#pvPhone').classList.add('on');
+});
+$('#pvPhoneClose').addEventListener('click',()=>{$('#pvPhone').classList.remove('on');$('#pvFrame').src='about:blank'});
+$('#pvPhone').addEventListener('click',e=>{if(e.target.id==='pvPhone')$('#pvPhoneClose').click()});
+
+/* ---------- appetite ---------- */
+const APPETITE=[
+  {cls:'Hair salons',score:95,carriers:'NEXT, Hiscox, Coterie, Simply Business',note:'Ideal for instant quoting'},
+  {cls:'Barbershops',score:95,carriers:'NEXT, Hiscox, Coterie',note:'Main street business'},
+  {cls:'Nail, lash & braiding',score:95,carriers:'NEXT, Hiscox, Coterie',note:'Beauty services'},
+  {cls:'Consultants',score:95,carriers:'Hiscox, NEXT',note:'Professional services'},
+  {cls:'Marketing agencies',score:95,carriers:'Hiscox, NEXT',note:'Low-hazard office risk'},
+  {cls:'Bookkeepers & tax preparers',score:95,carriers:'Hiscox, NEXT',note:'Professional exposure only'},
+  {cls:'Doulas',score:90,carriers:'Hiscox',note:'Placed by Bindswift\'s broker before'},
+  {cls:'Wellness coaches',score:90,carriers:'Hiscox, NEXT',note:'Low liability exposure'},
+  {cls:'Retail stores',score:90,carriers:'Coterie, NEXT',note:'Good small business fit'},
+  {cls:'Small nonprofits',score:85,carriers:'Specialty nonprofit markets, Hiscox',note:'Community organizations'},
+  {cls:'Takeout restaurants',score:80,carriers:'Coterie, NEXT',note:'Usually quoted quickly'},
+  {cls:'Cafés & bakeries',score:80,carriers:'Coterie, NEXT',note:'Generally an easy class'},
+  {cls:'Sit-down restaurants',score:70,carriers:'Coterie, NEXT',note:'May need underwriter review'},
+  {cls:'Event venues',score:65,carriers:'Coterie, specialty markets',note:'Depends on the insurer'},
+  {cls:'Plumbers',score:50,carriers:'THREE, biBerk, E&S markets',note:'Often needs underwriting review'},
+  {cls:'Electricians',score:45,carriers:'THREE, biBerk, E&S markets',note:'Contractor class'},
+  {cls:'HVAC',score:40,carriers:'THREE, biBerk, E&S markets',note:'Higher hazard'},
+  {cls:'General contractors',score:30,carriers:'THREE, E&S markets',note:'Subcontractors add complexity'},
+  {cls:'Roofing',score:10,carriers:'E&S markets only',note:'Not offered right now'},
+  {cls:'Trucking',score:5,carriers:'Commercial auto markets',note:'Not a GL product'},
+  {cls:'Daycare',score:5,carriers:'Specialty markets',note:'Not offered right now'}];
+const TIERS=[
+  {min:90,name:'Quoted in minutes',sub:'Insurers quote and bind these online, usually the same day.'},
+  {min:75,name:'Quoted fast',sub:'Usually quoted the same day. A few answers may need a closer look.'},
+  {min:60,name:'Underwriter review',sub:'Your broker sends these to underwriters. Expect a few days.'},
+  {min:25,name:'Trades and contractors',sub:'In New York, most instant-quote insurers don\'t write contractor liability, so your broker places these with contractor and specialty markets. Expect a few days.'},
+  {min:0,name:'Not offered right now',sub:'Outside what Bindswift places today. Your broker can point you to a specialist.'}];
+function renderAppetite(){
+  const tierOf=x=>TIERS.find(t=>x.score>=t.min);
+  $('#appet').innerHTML=`<span class="tag" style="color:var(--muted)">Appetite</span>
+    <h1 style="margin-top:6px">Who we insure</h1>
+    <p style="color:var(--muted);max-width:640px;margin:6px 0 0">Some businesses can be quoted and bound in minutes. Others need a broker to look first. The score is how likely a business like yours is to get an instant quote and be bound.</p>
+    <p style="margin-top:12px"><a class="btn btn-black" href="#check">Check your business <span class="arrow">→</span></a></p>
+    ${TIERS.map(t=>{const xs=APPETITE.filter(x=>tierOf(x)===t);return `<section class="tier"><div class="tier-h"><h2>${esc(t.name)}</h2><span style="color:var(--muted);font-size:14px">${esc(t.sub)}</span></div>
+      <div class="ap-grid">${xs.map(x=>`<div class="ap"><b>${esc(x.cls)}</b><div class="bar"><i style="width:${x.score}%"></i></div>
+        <small><b style="display:inline;font-size:13px;color:var(--ink)">${x.score}/100</b> · ${esc(x.note)}</small><small style="margin-top:4px">Typical markets: ${esc(x.carriers)}</small></div>`).join('')}</div></section>`}).join('')}
+    <div class="cta-band" style="margin-top:34px"><div><h2>Don't see your business?</h2><p>Start a quote anyway. Your broker reviews every application.</p></div>
+      <a class="btn btn-white btn-lg" href="#quote">Start my quote <span class="arrow">→</span></a></div>`;
+}
+/* Instant quote check: scoring follows the Insurance Appetite Framework (class quote score), adjusted
+   for the intake-schema factors: revenue, employees, years in business, subcontractors, home-based,
+   claims and state. An estimate for the visitor, never a quote. */
+const CK={cls:'',state:'NY',rev:'250k',emp:'1',yrs:'3',home:'N',subs:'N',claims:'N'};
+const CK_Q=[
+  {k:'state',l:'Where is the business?',o:[['NY','NY'],['NJ','NJ'],['NC','NC'],['DE','DE'],['MD','MD']]},
+  {k:'rev',l:'Annual revenue',o:[['250k','Under $250K'],['1m','$250K–$1M'],['5m','$1M–$5M'],['10m','$5M–$10M'],['big','Over $10M']]},
+  {k:'emp',l:'People on payroll',o:[['1','Just me'],['5','2–5'],['15','6–15'],['50','16–50'],['51','51+']]},
+  {k:'yrs',l:'Years in business',o:[['0','Starting out'],['2','1–2'],['3','3+']]},
+  {k:'home',l:'Run from home?',o:[['Y','Yes'],['N','No']]},
+  {k:'subs',l:'Hire subcontractors?',o:[['Y','Yes'],['N','No']]},
+  {k:'claims',l:'Claims in the last 3 years?',o:[['Y','Yes'],['N','No']]}];
+function ckScore(){
+  const x=APPETITE.find(a=>a.cls===CK.cls); if(!x) return null;
+  const trade=x.score<60&&x.score>=25, why=[];
+  let sc=x.score; const adj=(n,t)=>{if(n){sc+=n;why.push((n>0?'+':'')+n+' · '+t)}};
+  if(CK.claims==='Y') adj(-25,'recent claims send most applications to an underwriter');
+  if(CK.subs==='Y') adj(trade?-20:-10,'subcontractors add review');
+  if(CK.yrs==='0') adj(-10,'new businesses get fewer instant quotes'); else if(CK.yrs==='2') adj(-3,'under 3 years in business');
+  if(CK.rev==='10m') adj(-15,'revenue over $5M is past many online limits'); if(CK.rev==='big') adj(-30,'revenue over $10M goes to underwriters');
+  if(CK.emp==='50') adj(-10,'larger payroll'); if(CK.emp==='51') adj(-25,'over 50 employees is past online limits');
+  if(CK.home==='Y'&&!trade) adj(5,'home-based businesses are simpler to insure');
+  if(trade&&CK.state!=='NY') adj(10,'more insurers write trades outside New York');
+  sc=Math.max(x.score>=20?20:0,Math.min(100,sc));  // anything we place stays placeable, just slower
+  const v=sc>=85?['Likely instant quote','Businesses like yours are usually quoted and bound online in minutes.']
+    :sc>=70?['Fast quote likely','Usually quoted the same day. A few answers may need a closer look.']
+    :sc>=50?['Broker review','Your broker sends this to underwriters. Expect a few days.']
+    :sc>=20?['Specialty market','Your broker places this with contractor or specialty insurers. Expect a few days.']
+    :['Not offered right now','This is outside what Bindswift places today. Your broker can point you to a specialist.'];
+  return {sc,v,x,why};
+}
+function ckRender(){
+  $('#ckForm').innerHTML=`<div class="ck-q"><label class="l" for="ckCls">What does your business do?</label>
+      <select id="ckCls"><option value="">Choose your business type…</option>${APPETITE.map(a=>`<option ${a.cls===CK.cls?'selected':''}>${esc(a.cls)}</option>`).join('')}</select></div>
+    <div class="ck-two">${CK_Q.map(q=>`<div class="ck-q"><span class="l">${esc(q.l)}</span><div class="seg">${q.o.map(([v,l])=>`<button type="button" class="${CK[q.k]===v?'on':''}" data-ck="${q.k}" data-v="${v}">${esc(l)}</button>`).join('')}</div></div>`).join('')}</div>`;
+  const r=ckScore(), o=$('#ckOut');
+  if(!r){o.innerHTML=`<span class="tag">Your result</span><div class="ck-verdict" style="margin-top:12px">Pick your business type</div><p>We'll score it as you answer.</p><div class="ck-meter"><i style="width:0"></i></div>
+    <a class="btn btn-white btn-block" href="#appetite">See every business we insure</a>`;return}
+  o.innerHTML=`<span class="tag">Your result · ${esc(r.x.cls)}</span>
+    <div class="ck-score">${r.sc}<small>/100</small></div><div class="ck-verdict">${esc(r.v[0])}</div><p>${esc(r.v[1])}</p>
+    <div class="ck-meter"><i style="width:${r.sc}%"></i></div>
+    <p style="margin-bottom:6px"><b style="color:#fff">Insurers that usually quote this:</b> ${esc(r.x.carriers)}</p>
+    ${r.why.length?`<ul>${r.why.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:''}
+    ${r.sc>=20?`<a class="btn btn-white btn-block" href="#quote">Start my quote <span class="arrow">→</span></a>`:`<a class="btn btn-white btn-block" href="#appetite">See who we insure</a>`}
+    <p class="fine">An estimate from Bindswift's appetite guide, not a quote or a promise of coverage.</p>`;
+}
+$('#ckForm').addEventListener('click',e=>{const b=e.target.closest('[data-ck]');if(!b)return;CK[b.dataset.ck]=b.dataset.v;ckRender()});
+$('#ckForm').addEventListener('change',e=>{if(e.target.id==='ckCls'){CK.cls=e.target.value;ckRender()}});
+ckRender();
+(function(){
+  const chip=x=>`<span class="chip">${esc(x.cls)}</span>`;
+  $('#homeFast').innerHTML=APPETITE.filter(x=>x.score>=80).map(chip).join('');
+  $('#homeReview').innerHTML=APPETITE.filter(x=>x.score>=25&&x.score<80).map(chip).join('');
+})();
+
+/* ---------- quote flow ---------- */
+const visible = f => !f.show || f.show(S.a);
+function fieldHTML(f){
+  const v=S.a[f.id];
+  const help=f.help?`<div class="help">${esc(f.help)}</div>`:'';
+  const lab=f.type==='consent'?'':`<label class="l" for="i-${f.id}">${esc(f.label)}${f.req?'':' <span class="opt-tag">(optional)</span>'}</label>`;
+  let ctl='';
+  switch(f.type){
+    case 'text': case 'email': case 'tel':
+      ctl=`<input type="${f.type==='text'?'text':f.type}" id="i-${f.id}" data-k="${f.id}" value="${esc(v)}" placeholder="${esc(f.ph||'')}" ${f.fmt==='zip'?'inputmode="numeric" maxlength="5"':''}${f.fmt==='fein'?' inputmode="numeric" maxlength="10"':''}>`;break;
+    case 'int':
+      ctl=`<input type="text" inputmode="numeric" id="i-${f.id}" data-k="${f.id}" value="${esc(v)}" placeholder="${esc(f.ph||'')}">`;break;
+    case 'money':
+      ctl=`<div class="money"><input type="text" inputmode="numeric" id="i-${f.id}" data-k="${f.id}" data-money="1" value="${v!==undefined&&v!==''?num(v).toLocaleString('en-US'):''}" placeholder="${esc(f.ph||'')}"></div>`;break;
+    case 'date':
+      ctl=`<input type="date" id="i-${f.id}" data-k="${f.id}" value="${esc(v)}">`;break;
+    case 'textarea':
+      ctl=`<textarea id="i-${f.id}" data-k="${f.id}" placeholder="${esc(f.ph||'')}">${esc(v)}</textarea>`;break;
+    case 'select':
+      ctl=`<select id="i-${f.id}" data-k="${f.id}" data-rerender="1"><option value="">Choose…</option>${f.opts.map(o=>`<option value="${esc(o.v)}" ${o.v===v?'selected':''}>${esc(o.l)}</option>`).join('')}</select>`;break;
+    case 'radio':
+      ctl=`<div class="opts ${f.cols?'cols2':''}" role="radiogroup">${f.opts.map(o=>`<button type="button" class="opt ${o.v===v?'on':''}" data-radio="${f.id}" data-v="${esc(o.v)}"><span class="dot"></span><span>${esc(o.l)}${o.small?`<small>${esc(o.small)}</small>`:''}</span></button>`).join('')}</div>`;break;
+    case 'yesno':
+      ctl=`<div class="yn opts">${['Y','N'].map(x=>`<button type="button" class="opt ${v===x?'on':''}" data-radio="${f.id}" data-v="${x}">${x==='Y'?'Yes':'No'}</button>`).join('')}</div>`;break;
+    case 'checks': case 'checklist': {
+      const arr=v||[];
+      ctl=`<div class="opts ${f.cols?'cols2':''}">${f.opts.map(o=>`<button type="button" class="opt ${arr.includes(o.v)?'on':''}" data-check="${f.id}" data-v="${esc(o.v)}"><span class="box"></span><span>${esc(o.l)}</span></button>`).join('')}
+        ${f.type==='checklist'?`<button type="button" class="opt ${S.a[f.id+'_none']?'on':''}" data-none="${f.id}"><span class="box"></span><span><b>None of these apply</b></span></button>`:''}</div>`;break;}
+    case 'signature':
+      ctl=`<input type="text" id="i-${f.id}" data-k="${f.id}" value="${esc(v)}" placeholder="${esc(f.ph||'')}" autocomplete="name">
+        <div class="sigpad" aria-label="Signature preview"><span class="x">×</span><div class="sig ${v?'':'ph'}" id="sigOut">${esc(v||'Your signature')}</div><div class="ln"></div><span class="cap">ELECTRONIC SIGNATURE · ${today()}</span></div>`;break;
+    case 'interests':
+      ctl=interestsHTML();break;
+    case 'bizcheck':
+      ctl=bizCheckHTML();break;
+    case 'emailverify':
+      ctl=emailVerifyHTML();break;
+    case 'feeagreement':
+      ctl=`<div class="card" style="padding:16px;box-shadow:none;background:#fff">
+        <span class="tag">Broker service fee agreement · N.Y. Ins. Law §2119</span>
+        <div style="font-size:13.5px;color:var(--ink-2);margin:10px 0 12px;white-space:pre-line">${esc(feeAgreementText(S.a))}</div>
+        <label class="check-line"><input type="checkbox" id="i-feeAgree" data-k="feeAgree" ${v?'checked':''}><span>I agree to the $50 Bindswift service fee above and sign this agreement with my electronic signature.</span></label></div>`;break;
+    case 'consent':
+      ctl=`<label class="check-line"><input type="checkbox" id="i-${f.id}" data-k="${f.id}" ${v?'checked':''}><span>${esc(f.label)}</span></label>`;break;
+  }
+  return `<div class="f" id="f-${f.id}">${lab}${help}${ctl}<div class="emsg">${esc(errText(f))}</div></div>`;
+}
+const INTEREST_TYPES=[
+  {v:'AdditionalInsured',l:'Additional insured',small:'Landlord, GC, building owner, or client named in your contract'},
+  {v:'Lienholder',l:'Lienholder',small:'Lender with a lien on your equipment'},
+  {v:'LossPayee',l:'Loss payee',small:'Gets paid first if insured property is damaged'},
+  {v:'LendersLossPayable',l:"Lender's loss payable",small:'Lender with loss-payable protection'},
+  {v:'Mortgagee',l:'Mortgagee',small:'Mortgage company on a building you own'},
+  {v:'EmployeeAsLessor',l:'Employee as lessor',small:'An employee who leases equipment to the business'}];
+const newInterest=()=>({type:'AdditionalInsured',name:'',street:'',city:'',state:'NY',zip:'',ref:'',cert:true});
+function interestsHTML(){
+  if(!Array.isArray(S.a.interests)||!S.a.interests.length) S.a.interests=[newInterest()];
+  const list=S.a.interests;
+  return list.map((it,i)=>{
+    const needsRef=it.type!=='AdditionalInsured';
+    const inp=(k,ph,extra='')=>`<input type="text" data-ik="${i}.${k}" value="${esc(it[k])}" placeholder="${esc(ph)}" ${extra}>`;
+    return `<div class="card ibox" style="padding:16px;margin-bottom:10px;box-shadow:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span class="tag">Interest ${String(i+1).padStart(2,'0')}</span>
+        ${list.length>1?`<button type="button" class="btn btn-line btn-sm" data-irm="${i}">Remove</button>`:''}</div>
+      <select data-ik="${i}.type" data-irr="1" style="margin-bottom:10px">${INTEREST_TYPES.map(o=>`<option value="${o.v}" ${o.v===it.type?'selected':''}>${esc(o.l)}</option>`).join('')}</select>
+      <div class="help" style="margin:0 0 10px">${esc((INTEREST_TYPES.find(o=>o.v===it.type)||{}).small||'')}</div>
+      <div style="display:grid;gap:8px">
+        ${inp('name','Company or person name')}
+        ${inp('street','Street address')}
+        <div style="display:grid;grid-template-columns:1fr 64px 92px;gap:8px">${inp('city','City')}${inp('state','ST','maxlength="2"')}${inp('zip','ZIP','inputmode="numeric" maxlength="5"')}</div>
+        ${needsRef?inp('ref','Loan / account number (if you have it)'):inp('ref','Contract or job number (optional)')}
+        <label class="check-line"><input type="checkbox" data-ik="${i}.cert" ${it.cert?'checked':''}><span>Send them a certificate of insurance</span></label>
+      </div></div>`;
+  }).join('')+(list.length<10?`<button type="button" class="btn btn-line btn-block" data-iadd="1">+ Add another</button>`:'');
+}
+/* ---------- live backend, email verification, NY records check ---------- */
+const LIVE={on:false,cfg:{}};
+const V={email:'',token:'',sent:false,busy:false,msg:'',err:''};
+const B={q:'',results:null,busy:false,err:'',source:''};
+async function api(path,opts){
+  const r=await fetch(path,opts); const ct=r.headers.get('content-type')||'';
+  if(!ct.includes('application/json')) throw new Error('offline');
+  return {status:r.status, j:await r.json()};
+}
+function emailVerifyHTML(){
+  const em=String(S.a.email||'').trim().toLowerCase();
+  if(!LIVE.on||!LIVE.cfg.emailVerification) return `<div class="help" style="margin:0">On the live site we email you a 6-digit code here to confirm it's you. Skipped in this demo.</div>`;
+  if((V.token||V.session)&&V.email===em) return `<div class="notice" style="margin:0;border-left-color:var(--ok)"><b>Email verified.</b> ${esc(em)}</div>`;
+  return `<div class="help">We'll email you a 6-digit code. This keeps fake applications out.</div>
+    ${LIVE.cfg.turnstileSiteKey?'<div id="tsBox" style="margin-bottom:10px"></div>':''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn btn-line" data-vsend="1" ${V.busy?'disabled':''}>${V.sent&&V.email===em?'Resend code':'Send code'}</button>
+      ${V.sent&&V.email===em?`<input type="text" id="vCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" style="flex:1;min-width:130px">
+        <button type="button" class="btn btn-black" data-vcheck="1" ${V.busy?'disabled':''}>Verify</button>`:''}
+    </div>
+    ${V.msg?`<div class="help" style="margin:8px 0 0">${esc(V.msg)}</div>`:''}${V.err?`<div class="help" style="margin:8px 0 0;color:var(--bad)">${esc(V.err)}</div>`:''}`;
+}
+async function sendCode(){
+  const em=String(S.a.email||'').trim().toLowerCase();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){V.err='Enter your email above first.';renderStep();return}
+  V.busy=true;V.err='';V.msg='';renderStep();
+  try{
+    const ts=window.turnstile&&LIVE.tsId!=null?turnstile.getResponse(LIVE.tsId):'';
+    const {status,j}=await api('/api/verify/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,turnstile:ts||''})});
+    if(status===200){V.sent=true;V.email=em;V.msg=`Code sent to ${em}. It expires in 10 minutes.`}else V.err=j.error||'Could not send the code.';
+  }catch(e){V.err='Could not reach Bindswift. Try again.'}
+  V.busy=false;renderStep();
+}
+async function checkCode(){
+  const code=($('#vCode')||{}).value||'';
+  V.busy=true;V.err='';renderStep();
+  try{
+    const {status,j}=await api('/api/verify/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:V.email,code})});
+    if(status===200){V.token=j.token;V.msg='';toast('Email verified')}else V.err=j.error||'That code isn\'t right.';
+  }catch(e){V.err='Could not reach Bindswift. Try again.'}
+  V.busy=false;renderStep();
+}
+const REGISTRIES={
+  NY:{short:'NY Department of State',name:'New York Department of State',idLabel:'DOS ID',url:'https://apps.dos.ny.gov/publicInquiry/',live:true,status:true,
+      shows:['Legal name','DOS ID','Entity type','Date of first filing','County','State where it was formed']},
+  NJ:{short:'NJ business records',name:'NJ Division of Revenue and Enterprise Services',idLabel:'Entity ID',ph:'10 digits',url:'https://www.njportal.com/DOR/BusinessNameSearch/',status:false,
+      shows:['Business name','Entity ID'],caveat:'The free search confirms the business exists. Status and good standing need a paid report.'},
+  NC:{short:'NC Secretary of State',name:'NC Secretary of State',idLabel:'SOSID',ph:'e.g. 1234567',url:'https://www.sosnc.gov/online_services/search/by_title/_Business_Registration',status:true,
+      shows:['Legal name','SOSID','Status','Date formed','Registered agent']},
+  DE:{short:'Delaware Division of Corporations',name:'Delaware Division of Corporations',idLabel:'File number',ph:'e.g. 1234567',url:'https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx',status:false,
+      shows:['Entity name','File number','Formation date','Registered agent'],caveat:'Delaware\'s free search doesn\'t show status or owners.'},
+  MD:{short:'Maryland SDAT',name:'Maryland SDAT (Maryland Business Express)',idLabel:'Department ID',ph:'e.g. W12345678',url:'https://egov.maryland.gov/businessexpress/entitysearch',status:true,
+      shows:['Business name','Department ID','Status','Filing history']}};
+function regPreview(rows){return `<dl>${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>`}
+function bizCheckHTML(){
+  const st=S.a.regState||'NY', R=REGISTRIES[st];
+  let h=`<div class="help" style="margin-top:0">Which state is your business registered in?</div>
+    <div class="states">${Object.keys(REGISTRIES).map(k=>`<button type="button" class="${k===st?'on':''}" data-regstate="${k}">${k}</button>`).join('')}</div>`;
+  if(st!=='NY'){
+    const id=S.a.regId||'';
+    h+=`<div class="help">Look up your business on the ${esc(R.name)} search, then enter your ${esc(R.idLabel)} below. Your broker checks it against the official record before your policy is issued.</div>
+      <a class="btn btn-line btn-block" href="${esc(R.url)}" target="_blank" rel="noopener noreferrer" style="white-space:normal;text-align:center">Open the official ${esc(st)} search ↗</a>
+      <div style="margin-top:10px"><label class="l" for="i-regId">${esc(R.idLabel)}</label>
+        <input type="text" id="i-regId" data-k="regId" value="${esc(id)}" placeholder="${esc(R.ph||'')}" maxlength="20" autocomplete="off"></div>
+      <div class="reg"><div class="tag" style="color:var(--muted)">What the ${esc(st)} record shows</div>
+        ${regPreview(R.shows.map(f=>[f,f===R.idLabel||/ID|SOSID|File number/.test(f)?(id?esc(id):'<span style="color:var(--muted)">from your entry</span>'):(/name/i.test(f)?esc(S.a.legalName||'Your legal business name'):'<span style="color:var(--muted)">on the official record</span>')]))}
+        ${R.caveat?`<div class="help" style="margin:8px 0 0">${esc(R.caveat)}</div>`:''}
+        <div class="help" style="margin:8px 0 0">Working in New York? A business formed in ${esc(st)} also needs to be on file with New York State. We check that too.</div></div>
+      <button type="button" class="opt ${S.a.bizUnlisted?'on':''}" data-bunlisted="1" style="margin-top:8px"><span class="box"></span><span>I can't find it<small>Brand new, or a DBA. Your broker will verify it.</small></span></button>`;
+    return h;
+  }
+  const picked=S.a.dosId;
+  h+=`<div class="help">We'll find your business in New York Department of State records so the name on your policy is exactly right.</div>`;
+  h+=`<button type="button" class="btn btn-line btn-block" data-bsearch="1" style="white-space:normal;text-align:center" ${B.busy?'disabled':''}>${B.busy?'Searching…':'Search NY records for “'+esc(S.a.legalName||'your business')+'”'}</button>`;
+  if(B.err) h+=`<div class="help" style="margin:8px 0 0;color:var(--bad)">${esc(B.err)}</div>`;
+  if(B.results){
+    h+= B.results.length?`<div class="opts" style="margin-top:10px">${B.results.map(r=>{
+        const mism=typeMismatch(r.type);
+        return `<button type="button" class="opt ${picked===r.dosId?'on':''}" data-bpick="${esc(r.dosId)}"><span class="dot"></span><span><b>${esc(r.name)}</b>
+          <small>${esc(titleCase(r.type))} · DOS ID ${esc(r.dosId)}${r.filed?' · filed '+esc(r.filed):''}${mism?' · <b>'+esc(mism)+'</b>':''}</small></span></button>`}).join('')}</div>`
+      :`<div class="help" style="margin:8px 0 0">No active New York entity found with that name. Check the spelling, or tell us below.</div>`;
+    h+=`<button type="button" class="opt ${S.a.bizUnlisted?'on':''}" data-bunlisted="1" style="margin-top:8px"><span class="box"></span><span>My business isn't listed<small>Brand new, registered in another state, or a DBA. Your broker will verify it.</small></span></button>`;
+  }
+  const r=picked&&(B.results||[]).find(x=>x.dosId===picked);
+  if(r) h+=`<div class="reg"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="tag" style="color:var(--muted)">NY Department of State record${B.demo?' · demo':''}</span><span class="pill ok">Match</span></div>
+    ${regPreview([['Legal name',esc(r.name)],['DOS ID',esc(r.dosId)],['Entity type',esc(titleCase(r.type))],['First filed',esc(r.filed||'')],['County',esc(titleCase(r.county||''))],['Formed in',esc(titleCase(r.jurisdiction||'New York'))]])}
+    <div class="help" style="margin:8px 0 0">Your policy will be issued to this exact name.</div></div>`;
+  if(picked&&S.a.entity==='SCorp') h+=`<div class="help" style="margin:8px 0 0">S-corp status is a federal tax election, so your broker may ask for your IRS acceptance letter (CP261).</div>`;
+  return h;
+}
+const titleCase=t=>String(t||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+function typeMismatch(type){
+  const t=String(type||'').toUpperCase(), e=S.a.entity;
+  const want={LLC:'LIMITED LIABILITY COMPANY',Corporation:'BUSINESS CORPORATION',SCorp:'BUSINESS CORPORATION',Partnership:'PARTNERSHIP'}[e];
+  return want&&!t.includes(want)?`doesn't match "${({LLC:'LLC',Corporation:'Corporation',SCorp:'S corporation',Partnership:'Partnership'})[e]}"`:'';
+}
+async function bizSearch(){
+  const n=String(S.a.legalName||'').trim();
+  if(n.length<3){B.err='Enter your legal business name first.';renderStep();return}
+  B.busy=true;B.err='';renderStep();
+  if(!LIVE.on){setTimeout(()=>{const t=S.a.entity==='LLC'?'DOMESTIC LIMITED LIABILITY COMPANY':'DOMESTIC BUSINESS CORPORATION';
+    B.demo=true;B.results=[{dosId:'6123457',name:n.toUpperCase(),type:t,filed:'2021-03-15',county:'NASSAU',jurisdiction:'NEW YORK'}];B.q=n;B.busy=false;renderStep()},600);return}
+  try{const {status,j}=await api('/api/business/lookup?name='+encodeURIComponent(n));
+      if(status===200){B.results=j.results;B.q=n}else{B.err=j.error||'NY records are unavailable right now.';B.results=[]}}
+  catch(e){B.err='NY records are unavailable right now.';B.results=[]}
+  B.busy=false;renderStep();
+}
+function bizPick(id){
+  const r=(B.results||[]).find(x=>x.dosId===id); if(!r) return;
+  S.a.dosId=r.dosId; S.a.legalName=r.name; S.a.bizUnlisted=false;
+  const t=String(r.type).toUpperCase();
+  if(t.includes('LIMITED LIABILITY COMPANY')&&S.a.entity!=='LLC'){S.a.entity='LLC';toast('Business type set to LLC to match state records')}
+  else if(t.includes('BUSINESS CORPORATION')&&!['Corporation','SCorp'].includes(S.a.entity)){S.a.entity='Corporation';toast('Business type set to Corporation to match state records')}
+  renderStep();
+}
+(async()=>{try{const {status,j}=await api('/api/config');if(status===200&&j.live){LIVE.on=true;LIVE.cfg=j;
+  if(j.turnstileSiteKey){const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;document.head.appendChild(sc)}
+  if(document.getElementById('v-quote').classList.contains('on')) renderStep();
+  const me=await loadMe(); if(me){setUser({name:me.name,email:me.email});V.email=me.email;V.session=true;if(document.getElementById('v-dashboard').classList.contains('on'))drawDash(me)}
+  else if(S.user&&!S.user.demo){setUser(null)}}}catch(e){}})();
+
+const FEE = {amount:50, version:'FA-2026-11'};
+function feeAgreementText(a){
+  return `Between ${a.legalName||'the applicant'} ("you") and Howard Analytics, a New York licensed property & casualty insurance broker (License #1931665), doing business as Bindswift.
+Services: preparing and submitting your insurance applications, shopping insurance carriers, placing and binding coverage you approve, and issuing certificates of insurance through Bindswift during the policy term.
+Fee: $${FEE.amount}.00, flat and one time, for each policy bound.
+When it's charged: right before your policy is bound, after you approve a quote. If no policy is bound, you are not charged. If the insurer does not issue the policy, the fee is refunded.
+This fee is separate from, and in addition to, your insurance premium and any insurer policy fees, taxes or surcharges. Howard Analytics also receives a commission from the insurer.
+Date: ${today()} · Agreement ${FEE.version}`;
+}
+function errText(f){
+  if(f.fmt==='zip') return 'Enter a 5-digit ZIP code.';
+  if(f.type==='email') return 'Enter a valid email address.';
+  if(f.fmt==='phone') return 'Enter a 10-digit phone number.';
+  if(f.fmt==='fein') return 'FEIN is 9 digits, like 12-3456789.';
+  if(f.type==='consent') return 'Please confirm to sign.';
+  if(f.type==='feeagreement') return 'Please agree to the service fee to continue.';
+  if(f.type==='emailverify') return 'Verify your email to continue.';
+  if(f.type==='bizcheck') return 'Pick your business from the results, or tell us it isn\'t listed.';
+  if(f.type==='signature') return 'Type your full name to sign.';
+  if(f.type==='checklist') return 'Check what applies, or choose "None of these apply."';
+  if(f.type==='interests') return 'Fill in a name, street, city, 2-letter state and 5-digit ZIP for each one.';
+  if(['radio','yesno','select','checks'].includes(f.type)) return 'Please choose an answer.';
+  return 'This is required.';
+}
+function renderStep(){
+  const st=STEPS[S.step], n=STEPS.length;
+  if(!S.a.effDate) S.a.effDate=addDays(1);
+  if(!S.a.payPlan) S.a.payPlan='Monthly';
+  const fs=st.fields.filter(visible);
+  let html=`<div class="flow-head"><span class="tag">Step ${String(S.step+1).padStart(2,'0')} / ${String(n).padStart(2,'0')} · General liability</span>${S.step===0?'<button class="sample" type="button" id="fillSample">Fill sample answers</button>':''}</div>
+    <div class="bar"><i style="width:${(S.step/(n-1))*100}%"></i></div>
+    <h2>${esc(st.title)}</h2><p class="sub">${esc(st.sub)}</p>`;
+  if(st.review) html+=reviewHTML();
+  for(let i=0;i<fs.length;i++){
+    const f=fs[i];
+    if(f.half&&fs[i+1]&&fs[i+1].half){html+=`<div class="row2">${fieldHTML(f)}${fieldHTML(fs[i+1])}</div>`;i++}
+    else html+=fieldHTML(f);
+  }
+  $('#flow').innerHTML=html;
+  const fl=$('#flow'); fl.classList.remove('flow-anim'); void fl.offsetWidth; if(S._lastStep!==S.step) fl.classList.add('flow-anim'); S._lastStep=S.step;
+  const so=$('#sigOut'); if(so&&S.a.signature) so.classList.add('write');
+  $('#backBtn').textContent=S.step===0?'Cancel':'Back';
+  $('#nextBtn').textContent=st.review?'Sign and submit':'Continue';
+  const fill=$('#fillSample'); if(fill) fill.addEventListener('click',fillSample);
+  const tsb=$('#tsBox'); if(tsb&&window.turnstile&&LIVE.cfg.turnstileSiteKey){LIVE.tsId=turnstile.render(tsb,{sitekey:LIVE.cfg.turnstileSiteKey})}
+  const pvb=$('#reviewPreview'); if(pvb) pvb.addEventListener('click',()=>openPreview(buildAcord(S.a)));
+  const {fein,...safe}=S.a;  // never keep the tax ID on the device
+  store.set('draft',{a:safe,step:S.step});
+}
+function reviewHTML(){
+  let h=`<div class="preview-cta"><div><b>See your filled ACORD 125 and 126</b><small>Exactly what your broker submits to carriers.</small></div><button class="btn btn-white btn-sm" type="button" id="reviewPreview">Preview</button></div>`;
+  STEPS.slice(0,-1).forEach((st,i)=>{
+    const rows=st.fields.filter(visible).map(f=>{
+      let v=S.a[f.id];
+      if(['emailverify','bizcheck','feeagreement'].includes(f.type)) return '';
+      if(v===undefined||v===''||(Array.isArray(v)&&!v.length)){ if(f.type==='checklist'&&S.a[f.id+'_none']) v='None'; else return ''; }
+      if(f.type==='money') v=usd(num(v));
+      else if(f.type==='yesno') v=v==='Y'?'Yes':'No';
+      else if(f.type==='date') v=mdy(v);
+      else if(f.type==='radio'||f.type==='select') v=optLabel(f,v);
+      else if(f.type==='interests') v=v.map(it=>`${(INTEREST_TYPES.find(o=>o.v===it.type)||{}).l}: ${it.name}`).join('; ');
+      else if(Array.isArray(v)) v=v.map(x=>optLabel(f,x)).join(', ');
+      const lab=f.label.length>42?f.label.slice(0,40)+'…':f.label;
+      return `<dt>${esc(lab)}</dt><dd>${esc(v)}</dd>`;
+    }).join('');
+    h+=`<div class="rev"><div class="rev-h"><b>${esc(st.title)}</b><button type="button" data-goto="${i}">Edit</button></div><dl>${rows}</dl></div>`;
+  });
+  return h+'<div style="height:14px"></div>';
+}
+function fillSample(){
+  S.a=JSON.parse(JSON.stringify(SAMPLE));
+  S.a.effDate=addDays(1); S.a.opsChecks_none=true;
+  S.step=STEPS.length-1; renderStep(); window.scrollTo(0,0);
+  toast('Sample contractor loaded: review and sign');
+}
+$('#flow').addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.ik){const [i,k]=el.dataset.ik.split('.');S.a.interests[+i][k]=el.type==='checkbox'?el.checked:el.value;el.closest('.f').classList.remove('err');if(el.dataset.irr)renderStep();return}
+  const k=el.dataset.k; if(!k) return;
+  if(el.type==='checkbox') S.a[k]=el.checked;
+  else if(el.dataset.money){const d=el.value.replace(/[^0-9]/g,'');S.a[k]=d;el.value=d?(+d).toLocaleString('en-US'):''}
+  else S.a[k]=el.value;
+  el.closest('.f').classList.remove('err');
+  if(k==='legalName'&&S.a.dosId){S.a.dosId='';B.results=null}
+  if(k==='signature'){const o=$('#sigOut');o.textContent=el.value||'Your signature';o.classList.toggle('ph',!el.value)}
+  if(k==='subCost'){clearTimeout(S._rr);S._rr=setTimeout(()=>{const pos=el.selectionStart;renderStep();const n=document.getElementById(el.id);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},500)}
+});
+$('#flow').addEventListener('change',e=>{if(e.target.dataset.irr){const [i,k]=e.target.dataset.ik.split('.');S.a.interests[+i][k]=e.target.value;renderStep();return}if(e.target.dataset.rerender){S.a[e.target.dataset.k]=e.target.value;renderStep()}});
+$('#flow').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.radio){S.a[b.dataset.radio]=b.dataset.v;renderStep();return}
+  if(b.dataset.check){const k=b.dataset.check,arr=S.a[k]||[];const i=arr.indexOf(b.dataset.v);i>=0?arr.splice(i,1):arr.push(b.dataset.v);S.a[k]=arr;S.a[k+'_none']=false;renderStep();return}
+  if(b.dataset.none){const k=b.dataset.none;S.a[k+'_none']=!S.a[k+'_none'];if(S.a[k+'_none'])S.a[k]=[];renderStep();return}
+  if(b.dataset.goto){S.step=+b.dataset.goto;renderStep();window.scrollTo(0,0)}
+  if(b.dataset.vsend){sendCode();return}
+  if(b.dataset.vcheck){checkCode();return}
+  if(b.dataset.regstate){S.a.regState=b.dataset.regstate;S.a.bizUnlisted=false;if(b.dataset.regstate!=='NY'){S.a.dosId=''}renderStep();return}
+  if(b.dataset.bsearch){bizSearch();return}
+  if(b.dataset.bpick){bizPick(b.dataset.bpick);return}
+  if(b.dataset.bunlisted){S.a.bizUnlisted=!S.a.bizUnlisted;if(S.a.bizUnlisted)S.a.dosId='';renderStep();return}
+  if(b.dataset.iadd){S.a.interests.push(newInterest());renderStep();return}
+  if(b.dataset.irm){S.a.interests.splice(+b.dataset.irm,1);renderStep();return}
+});
+function validate(){
+  const st=STEPS[S.step]; let first=null;
+  st.fields.filter(visible).forEach(f=>{
+    const v=S.a[f.id]; let ok=true;
+    const empty=v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length);
+    if(f.type==='checklist') ok=(v&&v.length)||S.a[f.id+'_none'];
+    else if(f.type==='interests') ok=(v||[]).length>0&&v.every(it=>it.name.trim().length>=2&&it.street.trim().length>=3&&it.city.trim().length>=2&&/^[A-Za-z]{2}$/.test(it.state)&&/^\d{5}$/.test(it.zip));
+    else if(f.type==='consent'||f.type==='feeagreement') ok=!f.req||v===true;
+    else if(f.type==='emailverify') ok=!LIVE.on||!LIVE.cfg.emailVerification||((V.token||V.session)&&V.email===String(S.a.email||'').trim().toLowerCase());
+    else if(f.type==='bizcheck') ok=(S.a.regState&&S.a.regState!=='NY')?(/^[A-Za-z0-9-]{3,20}$/.test(S.a.regId||'')||!!S.a.bizUnlisted):(!LIVE.on||!!S.a.dosId||!!S.a.bizUnlisted);
+    else if(f.req&&empty) ok=false;
+    if(ok&&!empty){
+      if(f.type==='email') ok=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+      if(f.fmt==='zip') ok=/^\d{5}$/.test(v);
+      if(f.fmt==='phone') ok=String(v).replace(/\D/g,'').length===10;
+      if(f.fmt==='fein') ok=String(v).replace(/\D/g,'').length===9;
+      if(f.type==='int') ok=/^\d+$/.test(String(v).trim());
+      if(f.type==='signature') ok=String(v).trim().split(/\s+/).length>=2;
+    }
+    const el=document.getElementById('f-'+f.id); if(el) el.classList.toggle('err',!ok);
+    if(!ok&&!first) first=el;
+  });
+  if(first){first.scrollIntoView({behavior:'smooth',block:'center'});return false}
+  return true;
+}
+$('#nextBtn').addEventListener('click',()=>{
+  if(!validate()) return;
+  if(S.step<STEPS.length-1){S.step++;renderStep();window.scrollTo(0,0)}
+  else submitApp();
+});
+$('#backBtn').addEventListener('click',()=>{if(S.step===0){location.hash='home';return}S.step--;renderStep();window.scrollTo(0,0)});
+
+/* =====================================================================
+   ACORD MAPPING: mirrors backend/app/acord_map.py. Modeled on a real
+   final GL submission; only boxes a real submission fills are mapped.
+   ===================================================================== */
+const GENERAL_125=['Subsidiary','Parent','Safety','Exposure','OtherInsurance','CoverageTerminated','PastAllegations','IndictedOrConvicted','SafetyViolations','NegativeFinancialAction','JudgementLien','Trust','Foreign','OtherVentures','PossessDrones','HireDrones'];
+const CONTRACTORS_126=['AAB','AAI','AAC','ABB','AAD','AAE'].map(c=>`Contractors_Question_${c}Code_A`);
+const PRODUCTS_126=['AAJ','ABA','ABB','ABC','ABD','ABE','ABF','ABG','ABH','ABI'].map(c=>`GeneralLiabilityLineOfBusiness_Question_${c}Code_A`);
+const GL=c=>`GeneralLiabilityLineOfBusiness_Question_${c}Code_A`;
+const GENERAL_126=[...['ABJ','ACA','ACJ','ACB','ACC'].map(GL),'Contractors_Question_AAHCode_A',
+  ...['ACD','KAG','ACE','KAA','KAH','ACF','KAB','ACG','ACH','AAB','AAC','AAD','AAE','AAF'].map(GL),
+  'Contractors_Question_AAGCode_A',GL('AAG')];
+
+function buildAcord(a){
+  const t=trade(a), lim=LIMITS.find(l=>l.v===a.limits)||LIMITS[0], ops=new Set(a.opsChecks||[]);
+  const YN=b=>b?'Y':'N', td=today(), hasSubs=num(a.subCost)>0, off=num(a.offsitePct||100);
+  const name=String(a.legalName||'').toUpperCase()+(a.dba?' DBA '+a.dba.toUpperCase():'');
+  const fein=String(a.fein||'').replace(/\D/g,''), feinF=fein?fein.slice(0,2)+'-'+fein.slice(2):'';
+  const desc=[t.acord,'Operations: '+(a.opsDesc||'')]; if(a.premises==='Home') desc.push('Provided location is the home office.');
+  const f125={
+    ACORD_CurrentDate:td, ACORD_AgencyName:[PRODUCER.agency,PRODUCER.address].filter(Boolean).join('\n'), ACORD_ProducerContact:PRODUCER.name,
+    ACORD_ProducerPhoneNumber:PRODUCER.phone, ACORD_ProducerEmailAddress:PRODUCER.email,
+    ACORD_Transaction_Quote:'On', ACORD_Transaction_Date:td,
+    ACORD_Policy_EffectiveDate:mdy(a.effDate), ACORD_Policy_ExpirationDate:plusYear(a.effDate),
+    ACORD_Policy_DirectPlan:'On', ACORD_Policy_PaymentPlan:a.payPlan||'Monthly',
+    ACORD_Policy_Insured1_Name:name, ACORD_Policy_Insured1_MailingAddress:`${a.street}, ${a.city}, NY ${a.zip}`,
+    ACORD_Policy_Insured1_NAICS:t.naics, ACORD_Policy_Insured1_FEINSSN:feinF,
+    ACORD_Policy_Insured1_PhoneNumber:a.phone, ['ACORD_Policy_Insured1_Type_'+a.entity]:'On',
+    ACORD_Contact1_Type:a.contactTitle, ACORD_Contact1_Name:a.contactName, ACORD_Contact1_PrimaryPhoneNumber:a.phone,
+    ACORD_Contact1_PrimaryCellPhone:'On', ACORD_Contact1_PrimaryEmailAddress:a.email,
+    ACORD_Location1_LocationNumber:'1', ACORD_Location1_BuildingNumber:'1', ACORD_Location1_Street:a.street,
+    ACORD_Location1_City:a.city, ACORD_Location1_State:'NY', ACORD_Location1_County:a.county, ACORD_Location1_ZIP:a.zip,
+    ['ACORD_Location1_CityLimits_'+(county(a).nyc?'Inside':(a.cityLimits||'Inside'))]:'On', ACORD_Location1_Employees_FullTime:String(a.ft||''),
+    ACORD_Location1_AnnualRevenue:fmt(num(a.revenue)),
+    ACORD_NatureOfBusiness_Contractor:'On', ACORD_NatureOfBusiness_Description:desc.join('\n'),
+    ACORD_NatureOfBusiness_InstallationPercentage:String(100-off), ACORD_NatureOfBusiness_OffPremisesInstallation:String(off),
+    ACORD_Signatures_Producer_Name:PRODUCER.name, ACORD_Signatures_Producer_NationalNumber:PRODUCER.npn,
+    ACORD_Signatures_Applicant_Date:td
+  };
+  if(num(a.pt)) f125.ACORD_Location1_Employees_PartTime=String(a.pt);
+  if(a.premises==='Owner'||a.premises==='Tenant') f125['ACORD_Location1_Interest_'+a.premises]='On';
+  else if(a.premises==='Home') f125.ACORD_Location1_Interest_Owner='On';
+  if(a.entity==='LLC'&&a.members) f125.ACORD_Policy_Insured1_Type_NumberofMembers=a.members;
+  if(a.safety==='Y'){f125.ACORD_General_Safety_SafetyManual='On'; if(a.osha==='Y') f125.ACORD_General_Safety_OSHA='On'}
+  if(a.cancelled==='Y'&&a.cancelWhy) f125['ACORD_General_CoverageTerminated_'+a.cancelWhy]='On';
+  if(String(a.losses||'0')==='0') f125.ACORD_LossHistory_None='On';
+  else Object.assign(f125,{ACORD_LossHistory_NumberOfYears:'5',ACORD_LossHistory_TotalLosses:fmt(num(a.lossPaid)),ACORD_LossHistory_1_LOB:'GL',ACORD_LossHistory_1_Description:a.lossDesc||'',ACORD_LossHistory_1_AmountPaid:fmt(num(a.lossPaid))});
+  const remarks=[];
+  if(a.insured==='Y'&&a.priorCarrier) remarks.push(`Prior GL: ${a.priorCarrier}${a.priorPolicy?' #'+a.priorPolicy:''}${a.priorExp?', exp '+mdy(a.priorExp):''}.`);
+  if(a.opsExplain) remarks.push(a.opsExplain); if(a.legalExplain) remarks.push(a.legalExplain);
+  if(remarks.length) f125.ACORD_General_Remarks=remarks.join(' ');
+  const yn125={}; [ops.has('parent'),false,a.safety==='Y',ops.has('flammables')||ops.has('blasting'),false,a.cancelled==='Y',a.abuseClaims==='Y',a.fraud==='Y',ops.has('violations'),a.bankrupt==='Y',a.judgment==='Y',false,false,ops.has('otherbiz'),ops.has('drones'),ops.has('drones')]
+    .forEach((v,i)=>yn125[GENERAL_125[i]]=YN(v));
+
+  const f126={
+    Producer_FullName_A:PRODUCER.agency, Form_CompletionDate_A:td, Policy_EffectiveDate_A:mdy(a.effDate), NamedInsured_FullName_A:name,
+    GeneralLiability_CoverageIndicator_A:'1', GeneralLiability_OccurrenceIndicator_A:'1',
+    GeneralLiability_GeneralAggregate_LimitAppliesPerPolicyIndicator_A:'1',
+    GeneralLiability_GeneralAggregate_LimitAmount_A:fmt(lim.agg), GeneralLiability_EachOccurrence_LimitAmount_A:fmt(lim.occ),
+    GeneralLiabilityLineOfBusiness_TypeOfWorkSubcontractedDescription_A:hasSubs?(a.subWork||''):'N/A',
+    Producer_AuthorizedRepresentative_FullName_A:PRODUCER.name, Producer_NationalIdentifier_A:PRODUCER.npn,
+    NamedInsured_SignatureDate_A:td
+  };
+  if(hasSubs){f126.Contractors_SubcontractorsPaidAmount_A=fmt(num(a.subCost)); if(a.subPct) f126.Contractors_WorkSubcontractedPercent_A=String(a.subPct)}
+  [ops.has('design'),ops.has('blasting'),ops.has('excavation'),hasSubs&&a.subsInsured==='N',hasSubs&&a.subsInsured==='N',ops.has('leaseequip')]
+    .forEach((v,i)=>f126[CONTRACTORS_126[i]]=YN(v));
+  PRODUCTS_126.forEach((k,i)=>f126[k]=i===0?YN(a.install==='Y'):YN(i===3&&a.holdHarmless==='Y'));
+  if(a.install==='Y'&&a.installDesc) f126.GeneralLiabilityLineOfBusiness_ApplicantInstallServiceProductsExplanation_A=a.installDesc;
+  const gv={2:ops.has('hazmat'),4:ops.has('leaseequip'),13:ops.has('structural'),14:ops.has('demolition'),15:ops.has('jv'),16:ops.has('leaseemp'),20:a.safety==='Y'};
+  GENERAL_126.forEach((k,i)=>f126[k]=YN(!!gv[i]));
+  f126.GeneralLiabilityLineOfBusiness_Question_AAHCode_A='N'; f126.GeneralLiabilityLineOfBusiness_Question_AAICode_A='N';
+  const FORMAL={AdditionalInsured:'Additional Insured',EmployeeAsLessor:'Employee as Lessor',LendersLossPayable:"Lender's Loss Payable",Lienholder:'Lienholder',LossPayee:'Loss Payee',Mortgagee:'Mortgagee'};
+  const ints=a.gcReq==='Y'?(a.interests||[]):[], notes=[], lab=v=>FORMAL[v];
+  const I125={AdditionalInsured:'ACORD_125_Interest_1_AdditionalInsured',EmployeeAsLessor:'ACORD_125_Interest_1_EmpAsLessor',Lienholder:'ACORD_125_Interest_1_Lienholder',LossPayee:'ACORD_125_Interest_1_LossPayee'};
+  if(ints.length){
+    const i1=ints[0];
+    f125.ACORD_125_Interest_1_NameAddress=`${i1.name}\n${i1.street}\n${i1.city}, ${String(i1.state).toUpperCase()} ${i1.zip}`;
+    f125.ACORD_125_Interest_1_ReferenceNumber=i1.ref;
+    if(I125[i1.type]) f125[I125[i1.type]]='On'; else {f125.ACORD_125_Interest_1_Other='On';f125.ACORD_125_Interest_1_OtherDesc=lab(i1.type)}
+    if(i1.cert) f125.ACORD_125_Interest_1_Certificate='On';
+    Object.assign(f126,{[`AdditionalInterest_Interest_${i1.type}Indicator_A`]:'1',AdditionalInterest_InterestRank_A:'1',
+      AdditionalInterest_FullName_A:i1.name,AdditionalInterest_MailingAddress_LineOne_A:i1.street,AdditionalInterest_MailingAddress_CityName_A:i1.city,
+      AdditionalInterest_MailingAddress_StateOrProvinceCode_A:String(i1.state).toUpperCase(),AdditionalInterest_MailingAddress_PostalCode_A:i1.zip,
+      AdditionalInterest_AccountNumberIdentifier_A:i1.ref});
+    if(i1.cert) f126.AdditionalInterest_CertificateRequiredIndicator_A='1';
+    if(ints.some(i=>i.type==='AdditionalInsured')) notes.push('Additional Insured requested (blanket AI, primary & non-contributory, waiver of subrogation where required by written contract).');
+    if(ints.length>1){const n=`${ints.length} additional interests: see attached Additional Interest Schedule.`;notes.push(n);f125.ACORD_General_Remarks=((f125.ACORD_General_Remarks||'')+' '+n).trim()}
+  }
+  if(notes.length) f126.GeneralLiabilityLineOfBusiness_RemarkText_A=notes.join(' ');
+  const schedule=ints.length>1?ints.map((i,n)=>({rank:n+1,type:lab(i.type),name:i.name,address:`${i.street}, ${i.city}, ${String(i.state).toUpperCase()} ${i.zip}`,ref:i.ref,cert:i.cert})):[];
+  const clean=o=>{Object.keys(o).forEach(k=>{if(o[k]===''||o[k]==null) delete o[k]});return o};
+  return {acord125:clean(f125), acord126:clean(f126), yn125, signer:a.signature||'', producer:PRODUCER.name, schedule, insured:name, effective:mdy(a.effDate)};
+}
+
+/* =====================================================================
+   ACORD PREVIEW. Renders the real blank forms with pdf.js and draws your
+   answers at each field's exact position (same layout the backend uses
+   for the final PDFs).
+   ===================================================================== */
+const RECTS = {"125":{"ACORD_CurrentDate":[0,508.4,738.5,593.2,754.1,0],"ACORD_AgencyName":[0,19.4,666.2,304.6,728.0,2],"ACORD_CarrierName":[0,307.0,714.2,542.9,729.4,0],"ACORD_NAICCode":[0,544.4,714.2,593.0,731.6,0],"ACORD_ProgramName":[0,307.0,690.1,524.9,706.1,0],"ACORD_ProgramCode":[0,526.4,690.1,593.0,706.1,0],"ACORD_PolicyNumber":[0,307.0,666.2,593.0,682.1,0],"ACORD_ProducerContact":[0,49.7,654.2,305.4,665.4,0],"ACORD_ProducerPhoneNumber":[0,60.5,642.2,305.4,653.4,0],"ACORD_UnderwriterOffice":[0,450.8,642.2,593.0,658.1,0],"ACORD_ProducerFaxNumber":[0,48.0,630.2,305.4,641.4,0],"ACORD_ProducerEmailAddress":[0,51.7,618.2,305.4,629.4,0],"ACORD_ProducerCode":[0,39.8,606.2,161.5,617.4,0],"ACORD_ProducerSubCode":[0,196.3,606.2,305.4,617.4,0],"ACORD_AgencyCustomerID":[0,90.7,594.5,305.4,605.4,0],"ACORD_Transaction_Time":[0,490.4,594.5,546.5,612.6,0],"ACORD_Policy_EffectiveDate":[0,19.0,312.4,85.6,334.0,0],"ACORD_Policy_PaymentPlan":[0,249.4,312.4,312.4,334.0,0],"ACORD_Policy_PaymentMethod":[0,314.2,312.4,388.0,334.0,0],"ACORD_Policy_Audit":[0,389.8,312.4,416.8,334.0,0],"ACORD_Policy_DepositAmount":[0,426.7,315.4,474.1,332.5,0],"ACORD_Policy_Insured1_GLCode":[0,306.8,276.2,377.3,292.1,0],"ACORD_Policy_Insured1_SIC":[0,378.8,276.2,449.3,292.1,0],"ACORD_Policy_Insured1_NAICS":[0,450.8,276.2,521.3,292.1,0],"ACORD_Policy_Insured1_FEINSSN":[0,522.8,276.2,593.2,292.1,0],"ACORD_Policy_Insured1_Type_NumberofMembers":[0,187.0,218.6,209.2,239.6,0],"ACORD_Policy_Insured2_GLCode":[0,306.8,192.2,377.3,208.1,0],"ACORD_Policy_Insured2_SIC":[0,378.8,192.2,449.3,208.1,0],"ACORD_Policy_Insured2_NAICS":[0,450.8,192.2,521.3,208.1,0],"ACORD_Policy_Insured2_FEINSSN":[0,522.8,192.2,593.2,208.1,0],"ACORD_Policy_Insured2_Type_NumberOfMembers":[0,187.0,134.6,209.2,155.6,0],"ACORD_Policy_Insured3_GLCode":[0,306.8,107.6,377.3,124.1,0],"ACORD_Policy_Insured3_SIC":[0,378.8,108.2,449.3,124.1,0],"ACORD_Policy_Insured3_NAICS":[0,450.8,108.2,521.3,124.1,0],"ACORD_Policy_Insured3_FEINSSN":[0,522.8,108.2,593.2,124.1,0],"ACORD_Policy_Insured3_Type_NumberofMembers":[0,187.0,50.6,209.2,71.6,0],"ACORD_Underwriter":[0,308.5,642.4,440.9,658.2,0],"ACORD_Transaction_Date":[0,430.8,594.8,486.9,612.9,0],"ACORD_Policy_ExpirationDate":[0,89.0,312.4,155.6,334.0,0],"ACORD_Policy_MinimumPremium":[0,482.7,315.4,530.1,332.5,0],"ACORD_Policy_PolicyPremium":[0,540.7,315.4,588.1,332.5,0],"ACORD_Policy_Insured1_Name":[0,20.4,268.4,303.0,290.0,0],"ACORD_Policy_Insured1_MailingAddress":[0,20.4,246.8,303.0,268.4,0],"ACORD_Policy_Insured1_PhoneNumber":[0,371.9,265.4,591.6,275.3,0],"ACORD_Policy_Insured1_Website":[0,368.6,252.6,588.3,262.5,0],"ACORD_Policy_Insured2_Name":[0,20.4,184.4,303.0,206.0,0],"ACORD_Policy_Insured2_MailingAddress":[0,20.4,162.0,303.0,183.6,0],"ACORD_Policy_Insured2_PhoneNumber":[0,370.8,181.3,590.5,191.3,0],"ACORD_Policy_Insured2_Website":[0,367.8,167.3,587.5,177.3,0],"ACORD_Policy_Insured3_Name":[0,20.4,98.4,303.0,120.0,0],"ACORD_Policy_Insured3_MailingAddress":[0,20.4,75.0,303.0,96.6,0],"ACORD_Policy_Insured3_PhoneNumber":[0,370.8,98.3,590.5,108.3,0],"ACORD_Policy_Insured3_Website":[0,367.8,84.3,587.5,94.3,0],"ACORD_LOB_BusinessAuto":[0,18.3,544.9,33.1,558.3,1],"ACORD_LOB_BusinessAuto_Premium":[0,156.4,546.8,211.4,557.7,0],"ACORD_Transaction_Quote":[0,378.3,628.2,393.0,641.6,1],"ACORD_Transaction_Bound":[0,378.3,617.2,393.0,630.6,1],"ACORD_Transaction_Change":[0,378.3,605.2,393.0,618.6,1],"ACORD_Transaction_Cancel":[0,378.3,594.2,393.0,607.6,1],"ACORD_Transaction_IssuePolicy":[0,457.3,628.2,472.0,641.6,1],"ACORD_Transaction_Renew":[0,532.3,628.2,547.0,641.6,1],"ACORD_Transaction_Time_AM":[0,547.3,605.2,562.0,618.6,1],"ACORD_Transaction_Time_PM":[0,547.3,594.2,562.0,607.6,1],"ACORD_Policy_DirectPlan":[0,158.3,311.1,173.0,324.5,1],"ACORD_Policy_AgencyPlan":[0,201.3,311.1,216.0,324.5,1],"ACORD_Policy_Insured1_Type_Corporation":[0,18.3,226.2,33.0,239.7,1],"ACORD_Policy_Insured1_Type_Individual":[0,18.3,215.2,33.0,228.7,1],"ACORD_Policy_Insured1_Type_JointVenture":[0,93.3,226.2,108.0,239.7,1],"ACORD_Policy_Insured1_Type_LLC":[0,93.3,215.2,108.0,228.7,1],"ACORD_Policy_Insured1_Type_NotForProfit":[0,222.7,226.2,238.0,239.7,1],"ACORD_Policy_Insured1_Type_Partnership":[0,222.3,215.2,237.0,228.7,1],"ACORD_Policy_Insured1_Type_SCorp":[0,320.3,226.2,335.0,239.7,1],"ACORD_Policy_Insured1_Type_Trust":[0,320.3,215.2,335.0,228.7,1],"ACORD_Policy_Insured2_Type_Corporation":[0,18.3,143.2,33.0,156.7,1],"ACORD_Policy_Insured2_Type_Individual":[0,18.3,131.2,33.0,144.7,1],"ACORD_Policy_Insured2_Type_JointVenture":[0,93.3,143.2,108.0,156.7,1],"ACORD_Policy_Insured2_Type_LLC":[0,93.3,131.2,108.0,144.7,1],"ACORD_Policy_Insured2_Type_NotForProfit":[0,222.3,143.2,237.0,156.7,1],"ACORD_Policy_Insured2_Type_Partnership":[0,222.3,131.2,237.0,144.7,1],"ACORD_Policy_Insured2_Type_SCorp":[0,320.3,143.2,335.0,156.7,1],"ACORD_Policy_Insured2_Type_Trust":[0,320.3,131.2,335.0,144.7,1],"ACORD_Policy_Insured3_Type_Corporation":[0,17.8,60.4,32.2,71.8,1],"ACORD_Policy_Insured3_Type_Individual":[0,17.8,48.2,32.2,59.7,1],"ACORD_Policy_Insured3_Type_JointVenture":[0,93.3,60.4,107.7,71.8,1],"ACORD_Policy_Insured3_Type_LLC":[0,93.3,48.2,107.7,59.7,1],"ACORD_Policy_Insured3_Type_NotForProfit":[0,223.3,60.4,237.7,71.8,1],"ACORD_Policy_Insured3_Type_Partnership":[0,223.3,48.2,237.7,59.7,1],"ACORD_Policy_Insured3_Type_SCorp":[0,320.3,60.4,334.7,71.8,1],"ACORD_Policy_Insured3_Type_Trust":[0,320.3,48.2,334.7,59.7,1],"ACORD_Contact1_Type":[1,68.6,738.2,305.4,749.4,0],"ACORD_Contact2_Type":[1,356.6,738.2,593.4,749.4,0],"ACORD_Contact1_Name":[1,70.6,726.1,305.3,737.3,0],"ACORD_Contact2_Name":[1,358.6,726.1,593.3,737.3,0],"ACORD_Contact1_PrimaryPhoneNumber":[1,18.6,702.0,161.5,715.2,0],"ACORD_Contact1_SecondaryPhoneNumber":[1,162.5,702.0,305.3,715.2,0],"ACORD_Contact1_PrimaryEmailAddress":[1,102.2,690.2,305.3,701.5,0],"ACORD_Contact2_PrimaryEmailAddress":[1,390.2,690.2,593.3,701.5,0],"ACORD_Contact1_SecondaryEmailAddress":[1,112.6,678.4,305.4,689.4,0],"ACORD_Contact2_SecondaryEmailAddress":[1,400.6,678.4,593.4,689.4,0],"ACORD_NatureOfBusiness_Description":[1,140.6,282.2,592.6,388.6,2],"ACORD_NatureOfOperations_OtherOperations":[1,199.1,156.4,592.6,256.6,2],"ACORD_Contact1_PrimaryHomePhone":[1,64.7,717.6,71.6,723.2,1],"ACORD_Contact1_PrimaryBusinessPhone":[1,97.7,717.6,104.6,723.2,1],"ACORD_Contact1_PrimaryCellPhone":[1,125.7,717.6,132.6,723.2,1],"ACORD_Contact1_SecondaryHomePhone":[1,208.7,717.6,215.6,723.2,1],"ACORD_Contact1_SecondaryBusinessPhone":[1,241.7,717.6,248.6,723.2,1],"ACORD_Contact1_SecondaryCellPhone":[1,269.7,717.6,276.6,723.2,1],"ACORD_Contact2_PrimaryHomePhone":[1,352.7,717.6,359.6,723.2,1],"ACORD_Contact2_PrimaryBusinessPhone":[1,385.7,717.6,392.6,723.2,1],"ACORD_Contact2_PrimaryCellPhone":[1,413.7,717.6,420.6,723.2,1],"ACORD_Contact2_SecondaryHomePhone":[1,496.7,717.6,503.6,723.2,1],"ACORD_Contact2_SecondaryBusinessPhone":[1,529.7,717.6,536.6,723.2,1],"ACORD_Contact2_SecondaryCellPhone":[1,557.7,717.6,564.6,723.2,1],"ACORD_Location1_LocationNumber":[1,19.0,644.3,43.3,657.8,0],"ACORD_Location1_BuildingNumber":[1,19.0,619.3,43.3,633.5,0],"ACORD_Location1_Street":[1,49.5,642.8,260.4,656.3,0],"ACORD_Location1_City":[1,66.7,630.1,196.4,641.6,0],"ACORD_Location1_County":[1,78.5,618.7,197.1,629.5,0],"ACORD_Location1_State":[1,223.1,629.8,261.9,642.0,0],"ACORD_Location1_ZIP":[1,223.1,617.8,261.9,630.0,0],"ACORD_Location1_CityLimits_Inside":[1,262.2,641.8,277.5,653.9,1],"ACORD_Location1_CityLimits_Outside":[1,262.2,629.8,277.5,641.9,1],"ACORD_Location1_Interest_Owner":[1,309.2,641.8,324.5,653.9,1],"ACORD_Location1_Interest_Tenant":[1,309.2,629.8,324.5,641.9,1],"ACORD_Location1_Employees_FullTime":[1,380.1,644.8,442.0,656.5,0],"ACORD_Location1_Employees_PartTime":[1,380.1,620.8,442.0,632.5,0],"ACORD_Location1_AnnualRevenue":[1,515.6,654.3,592.6,666.0,0],"ACORD_Location1_OccupiedArea":[1,523.8,642.8,571.9,653.9,0],"ACORD_Location1_PublicArea":[1,523.8,630.8,571.9,641.9,0],"ACORD_Location1_BuildingArea":[1,523.8,618.8,571.9,629.9,0],"ACORD_Location1_Description":[1,115.8,606.2,443.2,617.8,0],"ACORD_Location1_LeasedToOthers":[1,559.8,607.2,592.2,617.5,0],"ACORD_Location2_LocationNumber":[1,19.0,584.3,43.3,597.8,0],"ACORD_Location2_BuildingNumber":[1,19.0,559.3,43.3,573.5,0],"ACORD_Location2_Street":[1,49.5,582.8,260.4,596.3,0],"ACORD_Location2_City":[1,66.7,570.1,196.4,581.6,0],"ACORD_Location2_County":[1,78.5,558.7,197.1,569.5,0],"ACORD_Location2_State":[1,223.1,569.8,261.9,582.0,0],"ACORD_Location2_ZIP":[1,223.1,557.8,261.9,570.0,0],"ACORD_Location2_CityLimits_Inside":[1,262.2,581.8,277.5,593.9,1],"ACORD_Location2_CityLimits_Outside":[1,262.2,569.8,277.5,581.9,1],"ACORD_Location2_Interest_Owner":[1,309.2,581.8,324.5,593.9,1],"ACORD_Location2_Interest_Tenant":[1,309.2,569.8,324.5,581.9,1],"ACORD_Location2_Employees_FullTime":[1,380.1,584.8,442.0,596.5,0],"ACORD_Location2_Employees_PartTime":[1,380.1,560.8,442.0,572.5,0],"ACORD_Location2_AnnualRevenue":[1,515.6,594.3,592.6,606.0,0],"ACORD_Location2_OccupiedArea":[1,523.8,582.8,571.9,593.9,0],"ACORD_Location2_PublicArea":[1,523.8,570.8,571.9,581.9,0],"ACORD_Location2_BuildingArea":[1,523.8,558.8,571.9,569.9,0],"ACORD_Location2_Description":[1,115.8,546.2,443.2,557.8,0],"ACORD_Location2_LeasedToOthers":[1,559.8,547.2,592.2,557.5,0],"ACORD_Location3_LocationNumber":[1,19.0,524.3,43.3,537.8,0],"ACORD_Location3_BuildingNumber":[1,19.0,499.3,43.3,513.5,0],"ACORD_Location3_Street":[1,49.5,522.8,260.4,536.3,0],"ACORD_Location3_City":[1,66.7,510.1,196.4,521.6,0],"ACORD_Location3_County":[1,78.5,498.7,197.1,509.5,0],"ACORD_Location3_State":[1,223.1,509.8,261.9,522.0,0],"ACORD_Location3_ZIP":[1,223.1,497.8,261.9,510.0,0],"ACORD_Location3_CityLimits_Inside":[1,262.2,521.8,277.5,533.9,1],"ACORD_Location3_CityLimits_Outside":[1,262.2,509.8,277.5,521.9,1],"ACORD_Location3_Interest_Owner":[1,309.2,521.8,324.5,533.9,1],"ACORD_Location3_Interest_Tenant":[1,309.2,509.8,324.5,521.9,1],"ACORD_Location3_Employees_FullTime":[1,380.1,524.8,442.0,536.5,0],"ACORD_Location3_Employees_PartTime":[1,380.1,500.8,442.0,512.5,0],"ACORD_Location3_AnnualRevenue":[1,515.6,534.3,592.6,546.0,0],"ACORD_Location3_OccupiedArea":[1,523.8,522.8,571.9,533.9,0],"ACORD_Location3_PublicArea":[1,523.8,510.8,571.9,521.9,0],"ACORD_Location3_BuildingArea":[1,523.8,498.8,571.9,509.9,0],"ACORD_Location3_Description":[1,115.8,486.2,443.2,497.8,0],"ACORD_Location3_LeasedToOthers":[1,559.8,487.2,592.2,497.5,0],"ACORD_Location4_LocationNumber":[1,19.0,464.3,43.3,477.8,0],"ACORD_Location4_BuildingNumber":[1,19.0,439.3,43.3,453.5,0],"ACORD_Location4_Street":[1,49.5,462.8,260.4,476.3,0],"ACORD_Location4_City":[1,66.7,450.1,196.4,461.6,0],"ACORD_Location4_County":[1,78.5,438.7,197.1,449.5,0],"ACORD_Location4_State":[1,223.1,449.8,261.9,462.0,0],"ACORD_Location4_ZIP":[1,223.1,437.8,261.9,450.0,0],"ACORD_Location4_CityLimits_Inside":[1,262.2,461.8,277.5,473.9,1],"ACORD_Location4_CityLimits_Outside":[1,262.2,449.8,277.5,461.9,1],"ACORD_Location4_Interest_Owner":[1,309.2,461.8,324.5,473.9,1],"ACORD_Location4_Interest_Tenant":[1,309.2,449.8,324.5,461.9,1],"ACORD_Location4_Employees_FullTime":[1,380.1,464.8,442.0,476.5,0],"ACORD_Location4_Employees_PartTime":[1,380.1,440.8,442.0,452.5,0],"ACORD_Location4_AnnualRevenue":[1,515.6,474.3,592.6,486.0,0],"ACORD_Location4_OccupiedArea":[1,523.8,462.8,571.9,473.9,0],"ACORD_Location4_PublicArea":[1,523.8,450.8,571.9,461.9,0],"ACORD_Location4_BuildingArea":[1,523.8,438.8,571.9,449.9,0],"ACORD_Location4_Description":[1,115.8,426.2,443.2,437.8,0],"ACORD_Location4_LeasedToOthers":[1,559.8,427.2,592.2,437.5,0],"ACORD_NatureOfBusiness_Apartments":[1,18.0,401.5,33.4,413.6,1],"ACORD_NatureOfBusiness_Condominiums":[1,18.0,389.5,33.4,401.6,1],"ACORD_NatureOfBusiness_Contractor":[1,97.0,401.5,112.4,413.6,1],"ACORD_NatureOfBusiness_Institutional":[1,97.0,389.5,112.4,401.6,1],"ACORD_NatureOfBusiness_Manufacturing":[1,172.0,401.5,187.4,413.6,1],"ACORD_NatureOfBusiness_Office":[1,172.0,389.5,187.4,401.6,1],"ACORD_NatureOfBusiness_Restaurant":[1,255.0,401.5,270.4,413.6,1],"ACORD_NatureOfBusiness_Retail":[1,255.0,389.5,270.4,401.6,1],"ACORD_NatureOfBusiness_Service":[1,327.0,401.5,342.4,413.6,1],"ACORD_NatureOfBusiness_Wholesale":[1,327.0,389.5,342.4,401.6,1],"ACORD_NatureOfBusiness_StartDate":[1,506.1,389.4,591.6,401.8,0],"ACORD_NatureOfBusiness_InstallationPercentage":[1,236.2,259.3,314.2,273.5,0],"ACORD_NatureOfBusiness_OffPremisesInstallation":[1,432.9,259.3,510.9,273.5,0],"ACORD_NatureOfBusiness_RetailPercentage":[1,82.7,268.5,160.7,282.6,0],"ACORD_125_Interest_1_AdditionalInsured":[1,18.2,120.1,32.3,131.7,1],"ACORD_125_Interest_1_Lienholder":[1,79.5,120.3,93.6,131.9,1],"ACORD_125_Interest_1_LossPayee":[1,79.5,108.2,93.6,119.8,1],"ACORD_125_Interest_1_NameAddress":[1,142.8,73.5,448.6,131.2,2],"ACORD_125_Interest_1_Certificate":[1,294.0,131.5,309.4,144.9,1],"ACORD_125_Interest_1_Policy":[1,356.0,131.5,371.4,144.9,1],"ACORD_125_Interest_1_SendBill":[1,400.0,131.5,415.4,144.9,1],"ACORD_125_Interest_1_ReferenceNumber":[1,209.1,60.8,295.6,72.0,0],"ACORD_125_Interest_1_EndDate":[1,361.8,60.8,450.4,72.0,0],"ACORD_125_Interest_1_LienAmount":[1,187.1,48.8,295.6,60.0,0],"ACORD_125_Interest_1_PhoneNumber":[1,361.2,48.8,450.4,60.0,0],"ACORD_125_Interest_1_FaxNumber":[1,494.4,48.8,594.3,60.0,0],"ACORD_125_Interest_1_ReasonForInterest":[1,99.1,37.1,295.6,48.0,0],"ACORD_125_Interest_1_EmailAddress":[1,363.9,37.1,593.7,48.0,0],"ACORD_125_Interest_1_CoOwner":[1,18.2,96.4,32.3,107.9,1],"ACORD_125_Interest_1_EmpAsLessor":[1,18.2,84.3,32.3,95.9,1],"ACORD_125_Interest_1_Leaseback":[1,18.2,72.2,32.3,83.7,1],"ACORD_125_Interest_1_Owner":[1,79.5,84.2,93.6,95.8,1],"ACORD_125_Interest_1_Registrant":[1,79.5,72.1,93.6,83.7,1],"ACORD_125_Interest_1_Other":[1,18.2,48.2,32.3,59.8,1],"ACORD_125_Interest_1_OtherDesc":[1,32.9,48.7,139.6,59.4,0],"ACORD_General_Subsidiary_Parent":[2,36.5,702.2,359.0,717.7,0],"ACORD_General_Subsidiary_Relationship":[2,361.2,702.2,517.4,717.1,0],"ACORD_General_Subsidiary_OwnershipPercentage":[2,519.2,702.2,553.7,718.1,0],"ACORD_General_Parent_SubsidaryName":[2,37.9,666.2,359.0,681.1,0],"ACORD_General_Parent_Relationship":[2,360.6,666.2,517.4,680.4,0],"ACORD_General_Parent_OwnershipPercentage":[2,519.2,666.2,553.7,682.1,0],"ACORD_General_OtherInsurance_1_LOB":[2,36.6,570.2,139.9,581.4,0],"ACORD_General_OtherInsurance_1_PolicyNumber":[2,141.0,570.2,291.1,581.4,0],"ACORD_General_OtherInsurance_3_LOB":[2,299.4,570.2,413.5,581.4,0],"ACORD_General_OtherInsurance_3_PolicyNumber":[2,414.6,570.2,553.9,581.4,0],"ACORD_General_OtherInsurance_2_LOB":[2,36.6,558.2,139.9,569.4,0],"ACORD_General_OtherInsurance_2_PolicyNumber":[2,141.0,558.2,291.1,569.4,0],"ACORD_General_OtherInsurance_4_LOB":[2,299.4,558.2,413.5,569.4,0],"ACORD_General_OtherInsurance_4_PolicyNumber":[2,414.6,558.2,553.9,569.4,0],"ACORD_General_NegativeFinancialAction_1_OccurenceDate":[2,36.6,336.2,85.9,347.4,0],"ACORD_General_NegativeFinancialAction_1_Explanation":[2,87.0,336.2,348.7,347.4,0],"ACORD_General_NegativeFinancialAction_1_Resolution":[2,349.8,336.2,503.5,347.4,0],"ACORD_General_NegativeFinancialAction_1_ResolutionDate":[2,504.6,336.2,553.9,347.4,0],"ACORD_General_NegativeFinancialAction_2_OccurenceDate":[2,36.6,324.2,85.9,335.4,0],"ACORD_General_NegativeFinancialAction_2_Explanation":[2,87.0,324.2,348.7,335.4,0],"ACORD_General_NegativeFinancialAction_2_Resolution":[2,349.8,324.2,503.5,335.4,0],"ACORD_General_NegativeFinancialAction_2_ResolutionDate":[2,504.6,324.2,553.9,335.4,0],"ACORD_General_JudgementLien_1_OccurenceDate":[2,36.6,288.2,85.9,299.4,0],"ACORD_General_JudgementLien_1_Explanation":[2,87.0,288.2,348.7,299.4,0],"ACORD_General_JudgementLien_1_Resolution":[2,349.8,288.2,503.5,299.4,0],"ACORD_General_JudgementLien_1_ResolutionDate":[2,504.6,288.2,553.9,299.4,0],"ACORD_General_JudgementLien_2_OccurenceDate":[2,36.6,276.2,85.9,287.4,0],"ACORD_General_JudgementLien_2_Explanation":[2,87.0,276.2,348.7,287.4,0],"ACORD_General_JudgementLien_2_Resolution":[2,349.8,276.2,503.5,287.4,0],"ACORD_General_JudgementLien_2_ResolutionDate":[2,504.6,276.2,553.9,287.4,0],"ACORD_General_Remarks":[2,19.2,120.4,592.8,149.2,0],"ACORD_PriorCarrier_1_AutoYear":[2,19.3,36.5,42.2,94.9,2],"ACORD_PriorCarrier_1_AutoCarrier":[2,234.6,84.2,352.3,95.4,0],"ACORD_PriorCarrier_1_AutoPolicyNumber":[2,234.6,72.2,352.3,83.4,0],"ACORD_PriorCarrier_1_AutoEffectiveDate":[2,234.6,48.2,352.3,59.4,0],"ACORD_PriorCarrier_1_AutoExpirationDate":[2,234.6,36.5,352.3,47.4,0],"ACORD_General_Subsidiary":[2,574.0,709.9,592.0,727.9,1],"ACORD_General_Parent":[2,574.0,673.9,592.0,691.9,1],"ACORD_General_Safety_SafetyManual":[2,34.7,641.4,50.7,656.1,1],"ACORD_General_Safety":[2,574.0,644.9,592.0,662.9,1],"ACORD_General_Safety_SafetyPosition":[2,117.7,641.4,133.7,656.1,1],"ACORD_General_Safety_MonthlyMeetings":[2,204.7,641.4,220.7,656.1,1],"ACORD_General_Safety_OSHA":[2,301.7,641.4,317.7,656.1,1],"ACORD_General_Exposure":[2,574.0,614.9,592.0,632.9,1],"ACORD_General_OtherInsurance":[2,574.0,570.9,592.0,588.9,1],"ACORD_General_Exposure_Description":[2,35.8,608.5,570.3,632.5,0],"ACORD_General_CoverageTerminated":[2,574.0,530.9,592.0,548.9,1],"ACORD_General_CoverageTerminated_NonPayment":[2,35.7,528.3,49.7,539.8,1],"ACORD_General_CoverageTerminated_NonRenewal":[2,35.7,516.3,49.7,527.8,1],"ACORD_General_CoverageTerminated_AgentStopRepresenting":[2,114.7,528.3,128.7,539.8,1],"ACORD_General_CoverageTerminated_Underwriting":[2,114.7,516.3,128.7,527.8,1],"ACORD_General_CoverageTerminated_ConditionCorrected":[2,201.7,516.3,215.7,527.8,1],"ACORD_General_CoverageTerminated_ConditionCorrected_Description":[2,327.2,516.1,567.0,529.9,0],"ACORD_General_PastAllegations":[2,574.0,488.9,592.0,506.9,1],"ACORD_General_PastAllegations_Description":[2,34.5,481.5,569.0,505.5,0],"ACORD_General_IndictedOrConvicted":[2,574.0,440.9,592.0,458.9,1],"ACORD_General_IndictedOrConvicted_Description":[2,36.4,421.3,570.9,445.3,0],"ACORD_General_SafetyViolations":[2,574.0,386.9,592.0,404.9,1],"ACORD_General_SafetyViolations_1_OccurenceDate":[2,36.6,384.2,85.9,395.4,0],"ACORD_General_SafetyViolations_1_Explanation":[2,87.6,384.0,348.3,394.4,0],"ACORD_General_SafetyViolations_1_Resolution":[2,348.8,384.2,502.2,395.3,0],"ACORD_General_SafetyViolations_1_ResolutionDate":[2,504.4,385.2,553.7,394.4,0],"ACORD_General_SafetyViolations_2_OccurenceDate":[2,36.6,372.2,85.9,383.4,0],"ACORD_General_SafetyViolations_2_Explanation":[2,87.6,372.0,348.3,382.4,0],"ACORD_General_SafetyViolations_2_Resolution":[2,348.8,372.2,502.2,383.3,0],"ACORD_General_SafetyViolations_2_ResolutionDate":[2,504.4,373.2,553.7,382.4,0],"ACORD_General_NegativeFinancialAction":[2,574.0,337.9,592.0,355.9,1],"ACORD_General_JudgementLien":[2,574.0,291.9,592.0,309.9,1],"ACORD_General_Trust":[2,574.0,263.9,592.0,276.0,1],"ACORD_General_Trust_Name":[2,239.3,264.4,501.7,276.2,0],"ACORD_General_Foreign":[2,574.0,246.9,592.0,261.6,1],"ACORD_General_OtherVentures":[2,574.0,219.9,592.0,237.9,1],"ACORD_General_OtherVentures_Description":[2,33.1,213.0,566.5,235.3,0],"ACORD_General_PossessDrones":[2,574.0,188.9,592.0,206.9,1],"ACORD_General_PossessDrones_Description":[2,35.1,188.1,568.4,201.2,0],"ACORD_General_HireDrones":[2,574.0,164.9,592.0,182.9,1],"ACORD_General_HireDrones_Description":[2,35.0,162.1,568.4,175.2,0],"ACORD_PriorCarrier_1_AutoPremium":[2,243.1,60.2,352.3,72.1,0],"ACORD_General_Safety_Other":[2,351.9,641.4,367.9,656.1,1],"ACORD_General_Safety_Other_Text":[2,371.2,642.1,569.5,656.3,0],"ACORD_PriorCarrier_2_AutoYear":[3,19.1,678.5,42.4,736.9,2],"ACORD_PriorCarrier_2_AutoCarrier":[3,234.6,726.2,352.3,737.4,0],"ACORD_PriorCarrier_2_AutoPolicyNumber":[3,234.6,714.2,352.3,725.4,0],"ACORD_PriorCarrier_2_AutoEffectiveDate":[3,234.6,690.2,352.3,701.4,0],"ACORD_PriorCarrier_2_AutoExpirationDate":[3,234.6,678.5,352.3,689.4,0],"ACORD_PriorCarrier_3_AutoYear":[3,19.1,618.4,42.4,676.7,2],"ACORD_PriorCarrier_3_AutoCarrier":[3,234.6,666.2,352.3,677.2,0],"ACORD_PriorCarrier_3_AutoPolicyNumber":[3,234.6,654.2,352.3,665.4,0],"ACORD_PriorCarrier_3_AutoEffectiveDate":[3,234.6,630.2,352.3,641.4,0],"ACORD_PriorCarrier_3_AutoExpirationDate":[3,234.6,618.4,352.3,629.4,0],"ACORD_LossHistory_NumberOfYears":[3,68.2,591.2,86.8,597.4,0],"ACORD_LossHistory_TotalLosses":[3,515.3,588.2,593.2,605.2,0],"ACORD_LossHistory_1_LOB":[3,76.3,552.2,121.8,563.4,0],"ACORD_LossHistory_1_Description":[3,123.1,552.2,316.2,563.4,0],"ACORD_LossHistory_1_DateOfClaim":[3,317.5,552.2,373.8,563.4,0],"ACORD_LossHistory_1_AmountPaid":[3,375.1,552.2,456.6,563.4,0],"ACORD_LossHistory_1_AmountReserved":[3,457.9,552.2,535.8,563.4,0],"ACORD_LossHistory_1_Subrogation":[3,537.1,552.2,564.6,563.4,0],"ACORD_LossHistory_1_ClaimOpen":[3,565.9,552.2,593.3,563.4,0],"ACORD_Signatures_Producer_Signature":[3,96.4,60.2,254.6,82.9,0],"ACORD_Signatures_Producer_Name":[3,356.0,60.2,492.2,82.9,0],"ACORD_Signatures_Producer_LicenseNumber":[3,493.9,60.2,593.3,73.2,0],"ACORD_Signatures_Applicant_Signature":[3,96.4,36.4,420.2,58.9,0],"ACORD_Signatures_Applicant_Date":[3,440.6,36.4,492.2,58.9,0],"ACORD_Signatures_Producer_NationalNumber":[3,494.0,36.4,593.2,53.4,0],"ACORD_PriorCarrier_2_AutoPremium":[3,241.6,703.0,350.1,714.1,0],"ACORD_PriorCarrier_3_AutoPremium":[3,241.6,643.0,350.1,654.1,0],"ACORD_LossHistory_None":[3,126.3,605.8,141.7,618.5,1],"ACORD_LossHistory_1_OccurenceDate":[3,18.5,552.7,73.8,563.9,0],"ACORD_LossHistory_2_Description":[3,123.1,540.2,316.2,551.4,0],"ACORD_LossHistory_2_DateOfClaim":[3,317.5,540.2,373.8,551.4,0],"ACORD_LossHistory_2_AmountPaid":[3,375.1,540.2,456.6,551.4,0],"ACORD_LossHistory_2_AmountReserved":[3,457.9,540.2,535.8,551.4,0],"ACORD_LossHistory_2_Subrogation":[3,537.1,540.2,564.6,551.4,0],"ACORD_LossHistory_2_ClaimOpen":[3,565.9,540.2,593.3,551.4,0],"ACORD_LossHistory_2_OccurenceDate":[3,18.5,540.7,73.8,551.9,0],"ACORD_LossHistory_2_LOB":[3,76.3,540.2,121.8,551.4,0],"ACORD_LossHistory_3_Description":[3,123.1,528.2,316.2,539.4,0],"ACORD_LossHistory_3_DateOfClaim":[3,317.5,528.2,373.8,539.4,0],"ACORD_LossHistory_3_AmountPaid":[3,375.1,528.2,456.6,539.4,0],"ACORD_LossHistory_3_AmountReserved":[3,457.9,528.2,535.8,539.4,0],"ACORD_LossHistory_3_Subrogation":[3,537.1,528.2,564.6,539.4,0],"ACORD_LossHistory_3_ClaimOpen":[3,565.9,528.2,593.3,539.4,0],"ACORD_LossHistory_3_OccurenceDate":[3,18.5,528.7,73.8,539.9,0],"ACORD_Signatures_Applicant_Initials":[3,539.6,417.6,588.7,425.5,0]},"126":{"Form_EditionIdentifier_A":[0,0.0,1.0,0.0,1.0,0],"Producer_CustomerIdentifier_A":[0,414.0,756.0,594.0,768.0,0],"Form_CompletionDate_A":[0,511.0,726.0,590.0,738.0,0],"Producer_FullName_A":[0,22.0,702.0,302.0,714.0,0],"Policy_PolicyNumberIdentifier_A":[0,22.0,678.0,245.0,690.0,0],"Policy_EffectiveDate_A":[0,252.0,678.0,302.0,690.0,0],"Insurer_FullName_A":[0,310.0,702.0,536.0,714.0,0],"Insurer_NAICCode_A":[0,544.0,702.0,590.0,714.0,0],"NamedInsured_FullName_A":[0,310.0,678.0,590.0,690.0,0],"GeneralLiability_CoverageIndicator_A":[0,18.0,624.0,32.0,636.0,1],"GeneralLiability_ClaimsMadeIndicator_A":[0,32.0,612.0,47.0,624.0,1],"GeneralLiability_OccurrenceIndicator_A":[0,122.0,612.0,137.0,624.0,1],"GeneralLiability_OwnersAndContractorsProtectiveIndicator_A":[0,18.0,600.0,32.0,612.0,1],"GeneralLiability_OtherCoverageIndicator_A":[0,18.0,588.0,32.0,600.0,1],"GeneralLiability_OtherCoverageDescription_A":[0,36.0,588.0,227.0,600.0,0],"GeneralLiability_PropertyDamage_DeductibleIndicator_A":[0,18.0,564.0,32.0,576.0,1],"GeneralLiability_PropertyDamage_DeductibleAmount_A":[0,119.0,564.0,169.0,576.0,0],"GeneralLiability_BodilyInjury_DeductibleIndicator_A":[0,18.0,552.0,32.0,564.0,1],"GeneralLiability_BodilyInjury_DeductibleAmount_A":[0,119.0,552.0,169.0,564.0,0],"GeneralLiability_OtherDeductibleIndicator_A":[0,18.0,540.0,32.0,552.0,1],"GeneralLiability_OtherDeductibleDescription_A":[0,40.0,540.0,112.0,552.0,0],"GeneralLiability_OtherDeductibleAmount_A":[0,119.0,540.0,169.0,552.0,0],"GeneralLiability_DeductiblePerClaimIndicator_A":[0,173.0,552.0,187.0,564.0,1],"GeneralLiability_DeductiblePerOccurrenceIndicator_A":[0,173.0,540.0,187.0,552.0,1],"GeneralLiability_GeneralAggregate_LimitAmount_A":[0,410.0,624.0,490.0,636.0,0],"GeneralLiability_GeneralAggregate_LimitAppliesPerPolicyIndicator_A":[0,302.0,612.0,317.0,624.0,1],"GeneralLiability_GeneralAggregate_LimitAppliesPerProjectIndicator_A":[0,302.0,600.0,317.0,612.0,1],"GeneralLiability_GeneralAggregate_LimitAppliesPerLocationIndicator_A":[0,353.0,612.0,367.0,624.0,1],"GeneralLiability_GeneralAggregate_LimitAppliesToOtherIndicator_A":[0,353.0,600.0,367.0,612.0,1],"GeneralLiability_GeneralAggregate_LimitAppliesToCode_A":[0,400.0,600.0,490.0,612.0,0],"GeneralLiability_ProductsAndCompletedOperations_AggregateLimitAmount_A":[0,410.0,588.0,490.0,600.0,0],"GeneralLiability_PersonalAndAdvertisingInjury_LimitAmount_A":[0,410.0,576.0,490.0,588.0,0],"GeneralLiability_EachOccurrence_LimitAmount_A":[0,410.0,564.0,490.0,576.0,0],"GeneralLiability_FireDamageRentedPremises_EachOccurrenceLimitAmount_A":[0,410.0,552.0,490.0,564.0,0],"GeneralLiability_MedicalExpense_EachPersonLimitAmount_A":[0,410.0,540.0,490.0,552.0,0],"GeneralLiability_EmployeeBenefits_LimitAmount_A":[0,410.0,528.0,490.0,540.0,0],"GeneralLiability_OtherCoverageLimitDescription_A":[0,234.0,516.0,396.0,528.0,0],"GeneralLiability_OtherCoverageLimitAmount_A":[0,410.0,516.0,490.0,528.0,0],"GeneralLiability_PremisesOperations_PremiumAmount_A":[0,497.0,600.0,590.0,612.0,0],"GeneralLiability_Products_PremiumAmount_A":[0,497.0,576.0,590.0,588.0,0],"GeneralLiability_OtherCoveragePremiumAmount_A":[0,497.0,552.0,590.0,564.0,0],"GeneralLiabilityLineOfBusiness_TotalPremiumAmount_A":[0,497.0,528.0,590.0,540.0,0],"GeneralLiabilityLineOfBusiness_RemarkText_A":[0,22.0,480.0,590.0,504.0,2],"GeneralLiability_UninsuredUnderinsuredMotorists_CoverageAvailableIndicator_A":[0,101.0,456.0,115.0,468.0,1],"GeneralLiability_UninsuredUnderinsuredMotorists_CoverageAvailableNoIndicator_A":[0,137.0,456.0,151.0,468.0,1],"GeneralLiability_MedicalPayments_CoverageAvailableIndicator_A":[0,367.0,456.0,382.0,468.0,1],"GeneralLiability_MedicalPayments_CoverageAvailableNoIndicator_A":[0,403.0,456.0,418.0,468.0,1],"GeneralLiability_Hazard_LocationProducerIdentifier_A":[0,22.0,408.0,50.0,420.0,0],"GeneralLiability_Hazard_HazardProducerIdentifier_A":[0,58.0,408.0,83.0,420.0,0],"GeneralLiability_Hazard_ClassCode_A":[0,90.0,408.0,137.0,420.0,0],"GeneralLiability_Hazard_PremiumBasisCode_A":[0,144.0,408.0,187.0,420.0,0],"GeneralLiability_Hazard_Exposure_A":[0,194.0,408.0,288.0,420.0,0],"GeneralLiability_Hazard_TerritoryCode_A":[0,295.0,408.0,324.0,420.0,0],"GeneralLiability_Hazard_PremisesOperationsRate_A":[0,331.0,408.0,389.0,420.0,0],"GeneralLiability_Hazard_ProductsRate_A":[0,396.0,408.0,457.0,420.0,0],"GeneralLiability_Hazard_PremisesOperationsPremiumAmount_A":[0,464.0,408.0,522.0,420.0,0],"GeneralLiability_Hazard_ProductsPremiumAmount_A":[0,529.0,408.0,590.0,420.0,0],"GeneralLiability_Hazard_Classification_A":[0,22.0,372.0,590.0,396.0,2],"GeneralLiability_Hazard_LocationProducerIdentifier_B":[0,22.0,336.0,50.0,348.0,0],"GeneralLiability_Hazard_HazardProducerIdentifier_B":[0,58.0,336.0,83.0,348.0,0],"GeneralLiability_Hazard_ClassCode_B":[0,90.0,336.0,137.0,348.0,0],"GeneralLiability_Hazard_PremiumBasisCode_B":[0,144.0,336.0,187.0,348.0,0],"GeneralLiability_Hazard_Exposure_B":[0,194.0,336.0,288.0,348.0,0],"GeneralLiability_Hazard_TerritoryCode_B":[0,295.0,336.0,324.0,348.0,0],"GeneralLiability_Hazard_PremisesOperationsRate_B":[0,331.0,336.0,389.0,348.0,0],"GeneralLiability_Hazard_ProductsRate_B":[0,396.0,336.0,457.0,348.0,0],"GeneralLiability_Hazard_PremisesOperationsPremiumAmount_B":[0,464.0,336.0,522.0,348.0,0],"GeneralLiability_Hazard_ProductsPremiumAmount_B":[0,529.0,336.0,590.0,348.0,0],"GeneralLiability_Hazard_Classification_B":[0,22.0,300.0,590.0,324.0,0],"GeneralLiability_Hazard_LocationProducerIdentifier_C":[0,22.0,264.0,50.0,276.0,0],"GeneralLiability_Hazard_HazardProducerIdentifier_C":[0,58.0,264.0,83.0,276.0,0],"GeneralLiability_Hazard_ClassCode_C":[0,90.0,264.0,137.0,276.0,0],"GeneralLiability_Hazard_PremiumBasisCode_C":[0,144.0,264.0,187.0,276.0,0],"GeneralLiability_Hazard_Exposure_C":[0,194.0,264.0,288.0,276.0,0],"GeneralLiability_Hazard_TerritoryCode_C":[0,295.0,264.0,324.0,276.0,0],"GeneralLiability_Hazard_PremisesOperationsRate_C":[0,331.0,264.0,389.0,276.0,0],"GeneralLiability_Hazard_ProductsRate_C":[0,396.0,264.0,457.0,276.0,0],"GeneralLiability_Hazard_PremisesOperationsPremiumAmount_C":[0,464.0,264.0,522.0,276.0,0],"GeneralLiability_Hazard_ProductsPremiumAmount_C":[0,529.0,264.0,590.0,276.0,0],"GeneralLiability_Hazard_Classification_C":[0,22.0,228.0,590.0,252.0,0],"GeneralLiability_ClaimsMade_ProposedRetroactiveDate_A":[0,155.0,168.0,223.0,180.0,0],"GeneralLiability_ClaimsMade_UninterruptedCoverageEntryDate_A":[0,259.0,156.0,328.0,168.0,0],"GeneralLiabilityLineOfBusiness_Question_AAHCode_A":[0,576.0,144.0,590.0,156.0,0],"GeneralLiabilityLineOfBusiness_AnyProductWorkAccidentLocationExcludedUninsuredPreviousCoverageExplanation_A":[0,22.0,120.0,569.0,144.0,2],"GeneralLiabilityLineOfBusiness_Question_AAICode_A":[0,576.0,108.0,590.0,120.0,0],"GeneralLiabilityLineOfBusiness_TailCoveragePurchasedPreviousPolicyExplanation_A":[0,22.0,84.0,569.0,108.0,2],"GeneralLiability_EmployeeBenefits_PerClaimDeductibleAmount_A":[0,137.0,60.0,284.0,72.0,0],"GeneralLiability_EmployeeBenefits_EmployeeCount_A":[0,137.0,48.0,284.0,60.0,0],"GeneralLiability_EmployeeBenefits_EmployeeCoveredCount_A":[0,547.0,60.0,590.0,72.0,0],"GeneralLiability_EmployeeBenefits_RetroactiveDate_A":[0,382.0,48.0,590.0,60.0,0],"Contractors_Question_AABCode_A":[1,576.0,726.0,590.0,738.0,0],"GeneralLiabilityLineOfBusiness_ApplicantDrawPlansForOthersExplanation_A":[1,22.0,702.0,569.0,726.0,2],"Contractors_Question_AAICode_A":[1,576.0,690.0,590.0,702.0,0],"GeneralLiabilityLineOfBusiness_OperationsIncludeBlastingExplanation_A":[1,22.0,666.0,569.0,690.0,2],"Contractors_Question_AACCode_A":[1,576.0,654.0,590.0,666.0,0],"GeneralLiabilityLineOfBusiness_OperationsIncludeEvacuationExplanation_A":[1,22.0,630.0,569.0,654.0,2],"Contractors_Question_ABBCode_A":[1,576.0,618.0,590.0,630.0,0],"GeneralLiabilityLineOfBusiness_SubcontractorsCarryLowerLimitsExplanation_A":[1,22.0,594.0,569.0,618.0,2],"Contractors_Question_AADCode_A":[1,576.0,582.0,590.0,594.0,0],"GeneralLiabilityLineOfBusiness_SubcontractorsWorksWithoutCertificatesOfInsuranceExplanation_A":[1,22.0,558.0,569.0,582.0,2],"Contractors_Question_AAECode_A":[1,576.0,546.0,590.0,558.0,0],"GeneralLiabilityLineOfBusiness_ApplicantLeaseEquipmentToOthersExplanation_A":[1,22.0,522.0,569.0,546.0,2],"Contractors_SubcontractorsPaidAmount_A":[1,263.0,510.0,328.0,522.0,0],"Contractors_WorkSubcontractedPercent_A":[1,392.0,510.0,421.0,522.0,0],"Contractors_FullTimeEmployeeCount_A":[1,468.0,510.0,508.0,522.0,0],"Contractors_PartTimeEmployeeCount_A":[1,554.0,510.0,590.0,522.0,0],"GeneralLiabilityLineOfBusiness_TypeOfWorkSubcontractedDescription_A":[1,22.0,486.0,590.0,510.0,2],"ProductAndCompletedOperations_ProductName_A":[1,22.0,444.0,119.0,456.0,0],"ProductAndCompletedOperations_AnnualGrossSalesAmount_A":[1,126.0,444.0,198.0,456.0,0],"ProductAndCompletedOperations_UnitCount_A":[1,205.0,444.0,277.0,456.0,0],"ProductAndCompletedOperations_InMarketMonthCount_A":[1,284.0,444.0,313.0,456.0,0],"ProductAndCompletedOperations_ExpectedLifeMonthCount_A":[1,320.0,444.0,349.0,456.0,0],"ProductAndCompletedOperations_IntendedUse_A":[1,356.0,444.0,472.0,456.0,0],"ProductAndCompletedOperations_PrincipalComponents_A":[1,479.0,444.0,590.0,456.0,0],"ProductAndCompletedOperations_ProductName_B":[1,22.0,420.0,119.0,432.0,0],"ProductAndCompletedOperations_AnnualGrossSalesAmount_B":[1,126.0,420.0,198.0,432.0,0],"ProductAndCompletedOperations_UnitCount_B":[1,205.0,420.0,277.0,432.0,0],"ProductAndCompletedOperations_InMarketMonthCount_B":[1,284.0,420.0,313.0,432.0,0],"ProductAndCompletedOperations_ExpectedLifeMonthCount_B":[1,320.0,420.0,349.0,432.0,0],"ProductAndCompletedOperations_IntendedUse_B":[1,356.0,420.0,472.0,432.0,0],"ProductAndCompletedOperations_PrincipalComponents_B":[1,479.0,420.0,590.0,432.0,0],"ProductAndCompletedOperations_ProductName_C":[1,22.0,396.0,119.0,408.0,0],"ProductAndCompletedOperations_AnnualGrossSalesAmount_C":[1,126.0,396.0,198.0,408.0,0],"ProductAndCompletedOperations_UnitCount_C":[1,205.0,396.0,277.0,408.0,0],"ProductAndCompletedOperations_InMarketMonthCount_C":[1,284.0,396.0,313.0,408.0,0],"ProductAndCompletedOperations_ExpectedLifeMonthCount_C":[1,320.0,396.0,349.0,408.0,0],"ProductAndCompletedOperations_IntendedUse_C":[1,356.0,396.0,472.0,408.0,0],"ProductAndCompletedOperations_PrincipalComponents_C":[1,479.0,396.0,590.0,408.0,0],"GeneralLiabilityLineOfBusiness_Question_AAJCode_A":[1,576.0,366.0,590.0,378.0,0],"GeneralLiabilityLineOfBusiness_ApplicantInstallServiceProductsExplanation_A":[1,22.0,342.0,569.0,366.0,2],"GeneralLiabilityLineOfBusiness_Question_ABACode_A":[1,576.0,330.0,590.0,342.0,0],"GeneralLiabilityLineOfBusiness_Question_ABBCode_A":[1,576.0,318.0,590.0,330.0,0],"GeneralLiabilityLineOfBusiness_ResearchDevelopmentConductedNewProductsPlannedExplanation_A":[1,22.0,294.0,569.0,318.0,2],"GeneralLiabilityLineOfBusiness_Question_ABCCode_A":[1,576.0,282.0,590.0,294.0,0],"GeneralLiabilityLineOfBusiness_GuaranteesWarrantiesHoldHarmlessExplanation_A":[1,22.0,258.0,569.0,282.0,2],"GeneralLiabilityLineOfBusiness_Question_ABDCode_A":[1,576.0,246.0,590.0,258.0,0],"GeneralLiabilityLineOfBusiness_ProductsRelatedToAircraftIndustryExplanation_A":[1,22.0,222.0,569.0,246.0,2],"GeneralLiabilityLineOfBusiness_Question_ABECode_A":[1,576.0,210.0,590.0,222.0,0],"GeneralLiabilityLineOfBusiness_ProductsRecalledDiscontinuedExplanation_A":[1,22.0,186.0,569.0,210.0,2],"GeneralLiabilityLineOfBusiness_Question_ABFCode_A":[1,576.0,174.0,590.0,186.0,0],"GeneralLiabilityLineOfBusiness_ProductsOfOthersSoldUnderApplicantLabelExplanation_A":[1,22.0,150.0,569.0,174.0,2],"GeneralLiabilityLineOfBusiness_Question_ABGCode_A":[1,576.0,138.0,590.0,150.0,0],"GeneralLiabilityLineOfBusiness_ProductsUnderLabelOfOthersExplanation_A":[1,22.0,114.0,569.0,138.0,2],"GeneralLiabilityLineOfBusiness_Question_ABHCode_A":[1,576.0,102.0,590.0,114.0,0],"GeneralLiabilityLineOfBusiness_VendorCoverageRequiredExplanation_A":[1,22.0,78.0,569.0,102.0,2],"GeneralLiabilityLineOfBusiness_Question_ABICode_A":[1,576.0,66.0,590.0,78.0,0],"GeneralLiabilityLineOfBusiness_NamedInsuredSellToOtherNamedInsuredExplanation_R":[1,22.0,36.0,569.0,66.0,2],"GeneralLiabilityLineOfBusiness_Attachment_AdditionalInterestIndicator_A":[2,245.0,744.0,259.0,756.0,1],"AdditionalInterest_Interest_AdditionalInsuredIndicator_A":[2,18.0,720.0,32.0,732.0,1],"AdditionalInterest_Interest_EmployeeAsLessorIndicator_A":[2,18.0,708.0,32.0,720.0,1],"AdditionalInterest_Interest_LendersLossPayableIndicator_A":[2,18.0,696.0,32.0,708.0,1],"AdditionalInterest_Interest_LienholderIndicator_A":[2,18.0,684.0,32.0,696.0,1],"AdditionalInterest_Interest_LossPayeeIndicator_A":[2,18.0,672.0,32.0,684.0,1],"AdditionalInterest_Interest_MortgageeIndicator_A":[2,18.0,660.0,32.0,672.0,1],"AdditionalInterest_Interest_OtherIndicator_A":[2,18.0,648.0,32.0,660.0,1],"AdditionalInterest_Interest_OtherDescription_A":[2,36.0,648.0,119.0,660.0,0],"AdditionalInterest_InterestRank_A":[2,216.0,732.0,234.0,744.0,0],"AdditionalInterest_CertificateRequiredIndicator_A":[2,277.0,732.0,292.0,744.0,1],"AdditionalInterest_FullName_A":[2,126.0,708.0,446.0,720.0,0],"AdditionalInterest_MailingAddress_LineOne_A":[2,126.0,696.0,446.0,708.0,0],"AdditionalInterest_MailingAddress_LineTwo_A":[2,126.0,684.0,446.0,696.0,0],"AdditionalInterest_MailingAddress_CityName_A":[2,126.0,672.0,356.0,684.0,0],"AdditionalInterest_MailingAddress_StateOrProvinceCode_A":[2,356.0,672.0,374.0,684.0,0],"AdditionalInterest_MailingAddress_PostalCode_A":[2,374.0,672.0,421.0,684.0,0],"AdditionalInterest_MailingAddress_CountryCode_A":[2,421.0,672.0,446.0,684.0,0],"AdditionalInterest_AccountNumberIdentifier_A":[2,198.0,648.0,281.0,660.0,0],"AdditionalInterest_Item_LocationProducerIdentifier_A":[2,490.0,720.0,518.0,732.0,0],"AdditionalInterest_Item_BuildingProducerIdentifier_A":[2,558.0,720.0,590.0,732.0,0],"AdditionalInterest_Item_ScheduledItemClassCode_A":[2,482.0,708.0,518.0,720.0,0],"AdditionalInterest_Item_ScheduledItemProducerIdentifier_A":[2,547.0,708.0,590.0,720.0,0],"AdditionalInterest_ItemDescription_A":[2,454.0,684.0,590.0,696.0,0],"GeneralLiabilityLineOfBusiness_Question_ABJCode_A":[2,576.0,612.0,590.0,624.0,0],"GeneralLiabilityLineOfBusiness_AnyMedicalFacilitiesProvidedMedicalProfessionalsEmployedExplanation_A":[2,22.0,588.0,569.0,612.0,2],"GeneralLiabilityLineOfBusiness_Question_ACACode_A":[2,576.0,576.0,590.0,588.0,0],"GeneralLiabilityLineOfBusiness_AnyExposureRadioactiveMaterialsExplanation_A":[2,22.0,552.0,569.0,576.0,2],"GeneralLiabilityLineOfBusiness_Question_ACJCode_A":[2,576.0,540.0,590.0,552.0,0],"GeneralLiabilityLineOfBusiness_OperationsInvolveStoringDisposingTransportingHazardousMaterialExplanation_A":[2,22.0,504.0,569.0,528.0,2],"GeneralLiabilityLineOfBusiness_Question_ACBCode_A":[2,576.0,492.0,590.0,504.0,0],"GeneralLiabilityLineOfBusiness_AnyListedOperationsSoldAcquiredLastFiveYearsExplanation_A":[2,22.0,456.0,569.0,492.0,2],"GeneralLiabilityLineOfBusiness_Question_ACCCode_A":[2,576.0,444.0,590.0,456.0,0],"GeneralLiabilityLineOfBusiness_MachineryOrEquipmentLoanedRentedOthersExplanation_A":[2,40.0,420.0,328.0,432.0,0],"CommercialInlandMarineProperty_PropertySubClass_SmallToolsIndicator_A":[2,331.0,420.0,346.0,432.0,1],"CommercialInlandMarineProperty_PropertySubClass_LargeEquipmentIndicator_A":[2,396.0,420.0,410.0,432.0,1],"PropertyItem_ItemDetail_InstructionGivenCode_A":[2,508.0,420.0,522.0,432.0,0],"GeneralLiabilityLineOfBusiness_MachineryOrEquipmentLoanedRentedOthersExplanation_B":[2,40.0,408.0,328.0,420.0,0],"CommercialInlandMarineProperty_PropertySubClass_SmallToolsIndicator_B":[2,331.0,408.0,346.0,420.0,1],"CommercialInlandMarineProperty_PropertySubClass_LargeEquipmentIndicator_B":[2,396.0,408.0,410.0,420.0,1],"PropertyItem_ItemDetail_InstructionGivenCode_B":[2,508.0,408.0,522.0,420.0,0],"Contractors_Question_AAHCode_A":[2,576.0,396.0,590.0,408.0,0],"GeneralLiabilityLineOfBusiness_WatercraftDocksFloatsOwnedHiredLeasedExplanation_A":[2,22.0,372.0,569.0,396.0,2],"GeneralLiabilityLineOfBusiness_Question_ACDCode_A":[2,576.0,360.0,590.0,372.0,0],"GeneralLiabilityLineOfBusiness_AnyParkingFacilitiesOwnedRentedExplanation_A":[2,22.0,336.0,569.0,360.0,2],"GeneralLiabilityLineOfBusiness_Question_KAGCode_A":[2,576.0,324.0,590.0,336.0,0],"GeneralLiabilityLineOfBusiness_FeeChargedForParkingExplanation_A":[2,22.0,300.0,569.0,324.0,2],"GeneralLiabilityLineOfBusiness_Question_ACECode_A":[2,576.0,288.0,590.0,300.0,0],"GeneralLiabilityLineOfBusiness_RecreationalFacilitiesProvidedExplanation_A":[2,22.0,264.0,569.0,288.0,2],"GeneralLiabilityLineOfBusiness_Question_KAACode_A":[2,576.0,252.0,590.0,264.0,0],"BuildingOccupancy_ApartmentCount_A":[2,40.0,228.0,72.0,240.0,0],"BuildingOccupancy_ApartmentArea_A":[2,79.0,228.0,122.0,240.0,0],"GeneralLiability_Otherlodgingoperationsdescription_A":[2,151.0,228.0,551.0,240.0,0],"GeneralLiabilityLineOfBusiness_Question_KAHCode_A":[2,576.0,216.0,590.0,228.0,0],"SwimmingPool_ApprovedFenceIndicator_A":[2,36.0,204.0,50.0,216.0,1],"SwimmingPool_LimitedAccessIndicator_A":[2,115.0,204.0,130.0,216.0,1],"SwimmingPool_DivingBoardIndicator_A":[2,191.0,204.0,205.0,216.0,1],"SwimmingPool_SlideIndicator_A":[2,259.0,204.0,274.0,216.0,1],"SwimmingPool_AboveGroundIndicator_A":[2,302.0,204.0,317.0,216.0,1],"SwimmingPool_InGroundIndicator_A":[2,374.0,204.0,389.0,216.0,1],"SwimmingPool_LifeGuardIndicator_A":[2,436.0,204.0,450.0,216.0,1],"GeneralLiabilityLineOfBusiness_Question_ACFCode_A":[2,576.0,192.0,590.0,204.0,0],"GeneralLiabilityLineOfBusiness_SportingOrSocialEventsSponsoredExplanation_A":[2,22.0,168.0,569.0,192.0,2],"GeneralLiabilityLineOfBusiness_Question_KABCode_A":[2,576.0,156.0,590.0,168.0,0],"AthleticTeam_SportDescription_A":[2,40.0,126.0,137.0,138.0,0],"AthleticTeam_ContactSportCode_A":[2,153.0,126.0,167.0,138.0,0],"AthleticTeam_AgeGroup_TwelveAndUnderIndicator_A":[2,180.0,126.0,194.0,138.0,1],"AthleticTeam_AgeGroup_ThirteenThroughEighteenIndicator_A":[2,241.0,138.0,256.0,150.0,1],"AthleticTeam_AgeGroup_OverEighteenIndicator_A":[2,241.0,126.0,256.0,138.0,1],"AthleticTeam_SponsorshipExtentDescription_A":[2,122.0,114.0,288.0,126.0,0],"AthleticTeam_SportDescription_B":[2,302.0,126.0,400.0,138.0,0],"AthleticTeam_ContactSportCode_B":[2,416.0,126.0,430.0,138.0,0],"AthleticTeam_AgeGroup_TwelveAndUnderIndicator_B":[2,443.0,126.0,457.0,138.0,1],"AthleticTeam_AgeGroup_ThirteenThroughEighteenIndicator_B":[2,504.0,138.0,518.0,150.0,1],"AthleticTeam_AgeGroup_OverEighteenIndicator_B":[2,504.0,126.0,518.0,138.0,1],"AthleticTeam_SponsorshipExtentDescription_B":[2,385.0,114.0,551.0,126.0,0],"GeneralLiabilityLineOfBusiness_Question_ACGCode_A":[2,576.0,102.0,590.0,114.0,0],"GeneralLiabilityLineOfBusiness_StructuralAlterationsContemplatedExplanation_A":[2,22.0,78.0,569.0,102.0,2],"GeneralLiabilityLineOfBusiness_Question_ACHCode_A":[2,576.0,66.0,590.0,78.0,0],"GeneralLiabilityLineOfBusiness_DemolitionExposureContemplatedExplanation_A":[2,22.0,36.0,569.0,66.0,2],"GeneralLiabilityLineOfBusiness_Question_AABCode_A":[3,576.0,726.0,590.0,738.0,0],"GeneralLiabilityLineOfBusiness_ApplicantActiveJointVenturesExplanation_A":[3,22.0,702.0,569.0,726.0,2],"GeneralLiabilityLineOfBusiness_Question_AACCode_A":[3,576.0,690.0,590.0,702.0,0],"AdditionalInterest_FullName_B":[3,40.0,654.0,202.0,666.0,0],"AdditionalInterest_WorkersCompensationCarriedCode_A":[3,241.0,654.0,256.0,666.0,0],"AdditionalInterest_FullName_C":[3,40.0,642.0,202.0,654.0,0],"AdditionalInterest_WorkersCompensationCarriedCode_B":[3,241.0,642.0,256.0,654.0,0],"AdditionalInterest_FullName_D":[3,302.0,654.0,464.0,666.0,0],"AdditionalInterest_WorkersCompensationCarriedCode_C":[3,504.0,654.0,518.0,666.0,0],"AdditionalInterest_FullName_E":[3,302.0,642.0,464.0,654.0,0],"AdditionalInterest_WorkersCompensationCarriedCode_D":[3,504.0,642.0,518.0,654.0,0],"GeneralLiabilityLineOfBusiness_Question_AADCode_A":[3,576.0,630.0,590.0,642.0,0],"GeneralLiabilityLineOfBusiness_LabourInterchangeOtherBusinessSubsidiariesExplanation_A":[3,22.0,606.0,569.0,630.0,2],"GeneralLiabilityLineOfBusiness_Question_AAECode_A":[3,576.0,594.0,590.0,606.0,0],"GeneralLiabilityLineOfBusiness_DayCareFacilitiesOperatedExplanation_A":[3,22.0,570.0,569.0,594.0,2],"GeneralLiabilityLineOfBusiness_Question_AAFCode_A":[3,576.0,558.0,590.0,570.0,0],"GeneralLiabilityLineOfBusiness_CrimesOccurredOrAttemptedLastThreeYearsExplanation_A":[3,22.0,534.0,569.0,558.0,2],"Contractors_Question_AAGCode_A":[3,576.0,522.0,590.0,534.0,0],"GeneralLiabilityLineOfBusiness_FormalSafetySecurityPolicyInEffectExplanation_A":[3,22.0,498.0,569.0,522.0,2],"GeneralLiabilityLineOfBusiness_Question_AAGCode_A":[3,576.0,486.0,590.0,498.0,0],"GeneralLiabilityLineOfBusiness_BusinessPromotionalLiteratureSafetyRepresentationsExplanation_A":[3,22.0,462.0,569.0,486.0,2],"GeneralLiabilityLineOfBusiness_RemarkText_B":[3,22.0,432.0,590.0,450.0,2],"Producer_AuthorizedRepresentative_Signature_A":[3,22.0,60.0,252.0,72.0,0],"Producer_AuthorizedRepresentative_FullName_A":[3,259.0,60.0,490.0,72.0,0],"Producer_StateLicenseIdentifier_A":[3,497.0,60.0,590.0,72.0,0],"NamedInsured_Signature_A":[3,22.0,36.0,418.0,48.0,0],"NamedInsured_SignatureDate_A":[3,425.0,36.0,490.0,48.0,0],"Producer_NationalIdentifier_A":[3,497.0,36.0,590.0,48.0,0]}};
+const PV = {form:'125', built:null, pdf:{}};
+async function loadForm(form){
+  if(PV.pdf[form]) return PV.pdf[form];
+  if(!window.pdfjsLib) throw new Error('PDF viewer did not load');
+  const res=await fetch(`forms/ACORD_${form}.pdf`);
+  if(!res.ok) throw new Error('Form not found');
+  const data=new Uint8Array(await res.arrayBuffer());
+  PV.pdf[form]=await pdfjsLib.getDocument({data, isEvalSupported:false}).promise;
+  return PV.pdf[form];
+}
+function openPreview(built){
+  PV.built=built; PV.form='125';
+  document.querySelectorAll('.pv-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.form==='125'));
+  $('#pv').classList.add('on'); document.body.style.overflow='hidden';
+  renderPreview();
+}
+function closePreview(){ $('#pv').classList.remove('on'); document.body.style.overflow=''; }
+$('#pvClose').addEventListener('click',closePreview);
+document.querySelectorAll('.pv-tabs button').forEach(b=>b.addEventListener('click',()=>{
+  PV.form=b.dataset.form; document.querySelectorAll('.pv-tabs button').forEach(x=>x.classList.toggle('on',x===b)); renderPreview();
+}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#pv').classList.contains('on')) closePreview()});
+
+async function renderPreview(){
+  const body=$('#pvBody'), form=PV.form, token=(PV.tok=(PV.tok||0)+1);
+  body.innerHTML='<div class="pv-msg">Rendering ACORD '+form+'…</div>';
+  try{
+    try{ await document.fonts.load('40px "Great Vibes"'); }catch(_){}
+    const pdf=await loadForm(form);
+    if(token!==PV.tok) return;
+    body.innerHTML='';
+    const width=Math.min(860, body.clientWidth-24), dpr=Math.min(window.devicePixelRatio||1,2);
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      if(token!==PV.tok) return;
+      const base=page.getViewport({scale:1}), vp=page.getViewport({scale:(width/base.width)*dpr});
+      const label=document.createElement('div'); label.className='pv-label'; label.textContent=`ACORD ${form} · PAGE ${p} OF ${pdf.numPages}`;
+      const wrap=document.createElement('div'); wrap.className='pv-page';
+      const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
+      wrap.appendChild(cv); body.appendChild(label); body.appendChild(wrap);
+      const ctx=cv.getContext('2d');
+      await page.render({canvasContext:ctx, viewport:vp, annotationMode:pdfjsLib.AnnotationMode.DISABLE}).promise;
+      drawValues(ctx, vp, form, p-1);
+    }
+    if(form==='126'&&PV.built.schedule&&PV.built.schedule.length){
+      const label=document.createElement('div'); label.className='pv-label'; label.textContent='ATTACHMENT · ADDITIONAL INTEREST SCHEDULE';
+      const pgEl=document.createElement('div'); pgEl.className='pv-page'; pgEl.style.cssText='color:#000;padding:28px 26px 40px;font-family:Helvetica,Arial,sans-serif';
+      pgEl.innerHTML=`<div style="font-weight:700;font-size:18px">ADDITIONAL INTEREST SCHEDULE</div>
+        <div style="font-size:12px;margin:4px 0 14px">Attachment to ACORD 126 · Applicant: ${esc(PV.built.insured)} · Effective ${esc(PV.built.effective)}</div>
+        <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12px;min-width:460px">
+        <tr>${['Rank','Interest','Name and address','Reference / loan #','Certificate'].map(h=>`<th style="border:1px solid #000;background:#eee;padding:5px;text-align:left">${h}</th>`).join('')}</tr>
+        ${PV.built.schedule.map(i=>`<tr>${[i.rank,i.type,i.name+' · '+i.address,i.ref||'—',i.cert?'Yes':'No'].map(c=>`<td style="border:1px solid #000;padding:5px;vertical-align:top">${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
+      body.appendChild(label); body.appendChild(pgEl);
+    }
+  }catch(err){
+    body.innerHTML=`<div class="pv-msg">Couldn't load the ACORD preview here (${esc(err.message)}).<br>The broker still receives the filled PDFs.</div>`;
+  }
+}
+function vpRect(vp,r){const q=vp.convertToViewportRectangle([r[1],r[2],r[3],r[4]]);return [Math.min(q[0],q[2]),Math.min(q[1],q[3]),Math.max(q[0],q[2]),Math.max(q[1],q[3])]}
+function drawValues(ctx, vp, form, pageIdx){
+  const b=PV.built, vals=form==='125'?b.acord125:b.acord126, R=RECTS[form], k=vp.scale;
+  ctx.fillStyle='#000'; ctx.textBaseline='alphabetic';
+  const text=(r,val,ml)=>{
+    const [x0,y0,x1,y1]=r, w=x1-x0, h=y1-y0;
+    if(ml&&h>20*k){
+      let size=10*k, lines;
+      for(;;){ctx.font=`${size}px Helvetica, Arial, sans-serif`;lines=wrapLines(ctx,val,w-4*k);if(lines.length*size*1.15<=h-2*k||size<=6*k)break;size-=0.5*k}
+      let y=y0+size+1*k; for(const ln of lines){if(y>y1+k)break;ctx.fillText(ln,x0+2*k,y);y+=size*1.15}
+      return;
+    }
+    let size=Math.max(6*k,Math.min(11*k,h*0.72));
+    ctx.font=`${size}px Helvetica, Arial, sans-serif`;
+    while(size>6*k&&ctx.measureText(val).width>w-4*k){size-=0.25*k;ctx.font=`${size}px Helvetica, Arial, sans-serif`}
+    ctx.fillText(val,x0+2*k,y1-(h-size*0.7)/2);
+  };
+  const check=r=>{
+    const [x0,y0,x1,y1]=r,w=x1-x0,h=y1-y0;
+    if(Math.min(w,h)<9*k){ctx.fillRect(x0+0.5*k,y0+0.5*k,w-k,h-k);return}
+    const size=Math.min(w,h)*0.9; ctx.font=`${size}px Helvetica, Arial, sans-serif`; ctx.textAlign='center';
+    ctx.fillText('X',(x0+x1)/2,y1-(h-size*0.72)/2); ctx.textAlign='left';
+  };
+  for(const [name,val] of Object.entries(vals)){
+    const r=R[name]; if(!r||r[0]!==pageIdx) continue;
+    const vr=vpRect(vp,r); (r[5]&1)?check(vr):text(vr,String(val),!!(r[5]&2));
+  }
+  if(form==='125'){
+    const auto=R.ACORD_LOB_BusinessAuto;
+    if(auto&&auto[0]===pageIdx){const vr=vpRect(vp,[0,auto[1],auto[2]-24,auto[3],auto[4]-24]);ctx.font=`${11*k}px Helvetica, Arial`;ctx.fillText('X',vr[0]+3.5*k,vr[3]-2.5*k)}
+    for(const [f,v] of Object.entries(b.yn125)){
+      const r=R['ACORD_General_'+f]; if(!r||r[0]!==pageIdx) continue;
+      const vr=vpRect(vp,r); ctx.font=`bold ${10*k}px Helvetica, Arial`; ctx.textAlign='center';
+      ctx.fillText(v,(vr[0]+vr[2])/2,(vr[1]+vr[3])/2+3.5*k); ctx.textAlign='left';
+    }
+  }
+  const sigs=form==='125'?{ACORD_Signatures_Producer_Signature:b.producer,ACORD_Signatures_Applicant_Signature:b.signer}
+                         :{Producer_AuthorizedRepresentative_Signature_A:b.producer,NamedInsured_Signature_A:b.signer};
+  for(const [f,v] of Object.entries(sigs)){
+    const r=R[f]; if(!v||!r||r[0]!==pageIdx) continue;
+    const vr=vpRect(vp,r), w=vr[2]-vr[0];
+    let size=((r[4]-r[2])>18?20:16)*k;
+    ctx.font=`${size}px "Great Vibes", cursive`;
+    while(size>9*k&&ctx.measureText(v).width>w-6*k){size-=0.5*k;ctx.font=`${size}px "Great Vibes", cursive`}
+    ctx.fillStyle='#0D1433'; ctx.fillText(v,vr[0]+4*k,vr[3]-2.5*k); ctx.fillStyle='#000';
+  }
+}
+function wrapLines(ctx,val,maxW){
+  const out=[];
+  for(const para of String(val).split('\n')){
+    let line='';
+    for(const word of para.split(/\s+/)){
+      const test=line?line+' '+word:word;
+      if(ctx.measureText(test).width>maxW&&line){out.push(line);line=word}else line=test;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+/* =====================================================================
+   DEMO RATING. Illustrative only, with fictional carriers. Real pricing
+   comes from your carriers after you approve the submission.
+   ===================================================================== */
+const CARRIERS=[
+  {id:'harbor',name:'Harborline Mutual',type:'adm',f:1.00,minPrem:1500,fee:0,appetite:(a,t)=>{
+    if(t.v==='roofing') return 'Roofing is outside this carrier\'s appetite.';
+    if(['7+','ext7'].includes(a.height)) return 'Doesn\'t write contractors working above 6 stories.';
+    if(num(a.losses)>=2) return 'Requires no more than 1 claim in 5 years.';
+    if(a.cancelled==='Y') return 'Doesn\'t accept risks cancelled or non-renewed in the last 3 years.';
+    if(yrsInBiz(a)<3) return 'Requires 3+ years in business.';
+    if(['demolition','structural','excavation','blasting'].some(k=>(a.opsChecks||[]).includes(k))) return 'Excludes demolition, structural and excavation work.';
+    return null}},
+  {id:'gotham',name:'Gotham Standard Casualty',type:'adm',f:1.14,minPrem:1750,fee:0,appetite:(a,t)=>{
+    if(t.v==='roofing') return 'Roofing is outside this carrier\'s appetite.';
+    if(num(a.losses)>=3) return 'Too many claims in the last 5 years for this carrier.';
+    if(a.cancelled==='Y'&&a.cancelWhy!=='AgentStopRepresenting') return 'Prior cancellation needs underwriter review.';
+    if(yrsInBiz(a)<1) return 'Requires at least 1 year in business.';
+    if((a.opsChecks||[]).includes('demolition')) return 'Excludes demolition work.';
+    return null}},
+  {id:'bright',name:'Brightwater Specialty',type:'es',f:1.36,minPrem:2500,fee:250,appetite:a=>a.fraud==='Y'?'Referred to your broker for review.':null}
+];
+function yrsInBiz(a){return a.started?(Date.now()-new Date(a.started).getTime())/(365.25*864e5):0}
+function rate(a){
+  const t=trade(a), c=county(a), lim=LIMITS.find(l=>l.v===a.limits)||LIMITS[0];
+  const base=num(a.payroll)/1000*t.rate+num(a.subCost)/1000*(a.subsInsured==='N'?4.2:1.1);
+  const terr=(c.nyc||(a.areas||[]).some(b=>!['Long Island','Westchester'].includes(b)))?1.55:1.0;
+  const height={'1-3':1,'4-6':1.12,'7+':1.3,'ext7':1.45}[a.height]||1;
+  const loss=[1,1.18,1.4,1.75][Math.min(3,num(a.losses))];
+  const exp=yrsInBiz(a)<3?1.12:1, safety=a.safety==='Y'?0.95:1;
+  const ops=1+0.08*((a.opsChecks||[]).filter(k=>['demolition','structural','excavation','hazmat','blasting'].includes(k)).length);
+  const endorse=(a.gcReq==='Y'&&(a.interests||[]).some(i=>i.type==='AdditionalInsured'))?425:0;
+  return CARRIERS.map(cr=>{
+    const why=cr.appetite(a,t); if(why) return {carrier:cr,declined:why};
+    let prem=Math.round(Math.max(cr.minPrem,base*terr*height*loss*exp*safety*ops*lim.f*cr.f)/5)*5+endorse;
+    let tax=0,stamp=0; if(cr.type==='es'){tax=Math.round((prem+cr.fee)*0.036);stamp=Math.round((prem+cr.fee)*0.0015)}
+    const total=prem+cr.fee+tax+stamp, down=Math.round(total*0.25), inst=Math.round((total-down)/9);
+    return {carrier:cr,prem,fee:cr.fee,tax,stamp,total,down,inst,lim,endorse};
+  });
+}
+
+/* ---------- submit + results ---------- */
+async function postToBackend(){
+  try{
+    const r=await fetch('/api/submissions',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({answers:S.a,verification:V.token||'',website_url:($('#hp')||{}).value||''})});
+    const ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json')) return {mode:'demo'};
+    const j=await r.json();
+    if(r.status===201) return {mode:'live',ref:j.ref};
+    return {mode:'error',status:r.status,msg:j.error,fields:j.fields||[]};
+  }catch(e){return {mode:'demo'}}
+}
+async function submitApp(){
+  $('#nextBtn').disabled=true;
+  const sent=await postToBackend();
+  $('#nextBtn').disabled=false;
+  if(sent.mode==='error'){
+    const names=sent.fields.map(k=>{for(const st of STEPS){const f=st.fields.find(f=>f.id===k);if(f)return f.label}return k});
+    $('#modalBody').innerHTML=`<h3 style="font-size:22px;margin-bottom:8px">We couldn't submit yet</h3>
+      <p style="color:var(--muted);margin:0 0 12px">${esc(sent.msg||'Something went wrong.')}</p>
+      ${names.length?`<ul style="margin:0 0 16px;padding-left:18px">${names.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:''}
+      <button class="btn btn-black btn-block" type="button" id="closeModal">Fix my answers</button>`;
+    $('#modal').classList.add('on'); $('#closeModal').addEventListener('click',()=>$('#modal').classList.remove('on'));
+    return;
+  }
+  const built=buildAcord(S.a);
+  S.result={built,quotes:rate(S.a),at:new Date(),a:JSON.parse(JSON.stringify(S.a)),live:sent.mode==='live',ref:sent.ref};
+  store.del('draft'); store.del('result');  // nothing sensitive left on a shared phone
+  const c125=Object.keys(built.acord125).length+Object.keys(built.yn125).length, c126=Object.keys(built.acord126).length;
+  $('#flowNav').style.display='none';
+  const steps=[`Filling ACORD 125 · ${c125} boxes`,`Filling ACORD 126 · ${c126} boxes`,'Applying your signature','Sending to your broker for review'];
+  $('#flow').innerHTML=`<div class="loading"><div class="spin"></div><h2>Preparing your applications</h2>
+    <div class="load-steps">${steps.map((s,i)=>`<div id="ls${i}"><i></i>${esc(s)}</div>`).join('')}</div></div>`;
+  window.scrollTo(0,0);
+  steps.forEach((_,i)=>setTimeout(()=>{const el=$('#ls'+i);if(el)el.classList.add('done')},450*(i+1)));
+  setTimeout(()=>{location.hash='results'},450*steps.length+500);
+}
+function renderResults(){
+  const R=S.result,a=R.a,t=trade(a),b=R.built;
+  const ok=R.quotes.filter(q=>!q.declined).sort((x,y)=>x.total-y.total), bestId=ok[0]&&ok[0].carrier.id;
+  const c125=Object.keys(b.acord125).length+Object.keys(b.yn125).length, c126=Object.keys(b.acord126).length;
+  const order=[...ok,...R.quotes.filter(q=>q.declined)];
+  const cards=order.map(q=>{
+    const cr=q.carrier, tag=`<span class="q-type">${cr.type==='adm'?'Admitted':'Specialty · E&amp;S'}</span>`;
+    if(q.declined) return `<div class="card q declined"><div class="q-name">${esc(cr.name)}</div>${tag}<div class="q-why">${esc(q.declined)}</div></div>`;
+    const best=cr.id===bestId;
+    return `<div class="card q ${best?'best':''}">${best?'<span class="badge-best">LOWEST PRICE</span>':''}
+      <div class="q-name">${esc(cr.name)}</div>${tag}
+      <div class="q-price">${usd(q.total)}<small> /yr</small></div>
+      <div class="q-mo">or ${usd(q.down)} down + 9 × ${usd(q.inst)}</div>
+      <div class="q-mo" style="margin-top:-8px">+ $${FEE.amount} Bindswift fee, charged once at binding</div>
+      <ul>
+        <li><span>Each occurrence</span><span>${usd(q.lim.occ)}</span></li>
+        <li><span>General aggregate</span><span>${usd(q.lim.agg)}</span></li>
+        ${q.endorse?`<li><span>AI + PNC + waiver</span><span>Included</span></li>`:''}
+        ${cr.type==='es'?`<li><span>Policy fee</span><span>${usd(q.fee)}</span></li><li><span>NY E&amp;S tax + stamping</span><span>${usd(q.tax+q.stamp)}</span></li>`:''}
+      </ul>
+      ${cr.type==='es'?'<div class="q-note">Non-admitted carrier: not covered by the NY Security Fund.</div>':''}
+      <button class="btn ${best?'btn-white':'btn-black'} btn-block" data-bind="${cr.id}" type="button">Request to bind</button></div>`;
+  }).join('');
+  const rows=(form,obj)=>Object.entries(obj).map(([k,v])=>`<tr><td>${form}</td><td><code>${esc(k)}</code></td><td>${esc(v).replace(/\n/g,'<br>')}</td></tr>`).join('');
+  $('#results').innerHTML=`
+    <div class="res-head">
+      <div><span class="tag" style="color:var(--muted)">General liability · ${esc(t.l)}</span><h1 style="margin-top:6px">Your applications are ready</h1><p>${esc(a.legalName)} · Effective ${mdy(a.effDate)}</p></div>
+      <a class="btn btn-line btn-sm" href="#quote" id="editAns">Edit answers</a> <a class="btn btn-black btn-sm" href="#dashboard">Go to my dashboard</a>
+    </div>
+    ${R.live?`<div class="notice"><b>Submitted to your broker.</b> Reference <span class="mono">${esc(R.ref)}</span>. A licensed Bindswift broker reviews every application before it goes to carriers.</div>`:''}
+    <div class="docs">
+      <div class="card doc" data-pv="125"><div class="doc-ic">125</div><div><b>ACORD 125</b><span>Commercial Insurance Application · ${c125} boxes · signed</span></div><span class="go">Preview →</span></div>
+      <div class="card doc" data-pv="126"><div class="doc-ic">126</div><div><b>ACORD 126</b><span>General Liability Section · ${c126} boxes · signed</span></div><span class="go">Preview →</span></div>
+    </div>
+    <span class="tag" style="color:var(--muted)">Estimated prices</span>
+    <div class="quotes" style="margin-top:14px">${cards}</div>
+    <p class="fine">Prototype: carriers are fictional and prices are illustrative estimates from a demo model, not offers of insurance. Coverage isn't bound until a licensed broker confirms with the carrier.</p>
+    <details class="card broker">
+      <summary>Broker view: ACORD field map <span class="tag" style="color:var(--muted)">${c125+c126} boxes ▾</span></summary>
+      <p style="color:var(--muted);font-size:14px;margin:10px 0 0">Exact PDF field names the backend fills. Y/N letters on 125 page 3 and the signatures are drawn onto the page.</p>
+      <div class="broker-tools"><button class="btn btn-black btn-sm" id="copyJson" type="button">Copy submission JSON</button></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Form</th><th>Field</th><th>Value</th></tr></thead><tbody>${rows('125',b.acord125)}${rows('125 p3 Y/N',Object.fromEntries(Object.entries(b.yn125).map(([k,v])=>['ACORD_General_'+k,v])))}${rows('126',b.acord126)}</tbody></table></div>
+      <textarea id="jsonOut" style="position:absolute;left:-9999px" readonly></textarea>
+    </details>`;
+  document.querySelectorAll('#results .doc, #results .q, #results .broker').forEach((el,i)=>{el.setAttribute('data-reveal','');el.style.setProperty('--d',(i*0.08)+'s')});
+  reveal();
+  $('#editAns').addEventListener('click',e=>{e.preventDefault();S.step=STEPS.length-1;location.hash='quote'});
+  document.querySelectorAll('[data-bind]').forEach(x=>x.addEventListener('click',()=>openBind(x.dataset.bind)));
+  document.querySelectorAll('[data-pv]').forEach(x=>x.addEventListener('click',()=>{openPreview(b);if(x.dataset.pv==='126')document.querySelector('.pv-tabs button[data-form="126"]').click()}));
+  $('#copyJson').addEventListener('click',copyJson);
+}
+function copyJson(){
+  const R=S.result, txt=JSON.stringify({submitted_at:R.at.toISOString(),line:'GL',answers:R.a,...R.built},null,2);
+  const fallback=()=>{const ta=$('#jsonOut');ta.value=txt;Object.assign(ta.style,{position:'static',width:'100%',height:'200px',marginTop:'12px'});ta.select();toast('Select all and copy')};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Submission JSON copied'),fallback)}catch(e){fallback()}
+}
+function openBind(id){
+  const q=S.result.quotes.find(x=>x.carrier.id===id), a=S.result.a;
+  $('#modalBody').innerHTML=`<div class="ok-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="m5 12 5 5 9-10" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h3 style="font-size:22px;margin-bottom:6px">Bind request recorded</h3>
+    <p style="color:var(--muted);margin:0 0 16px">${esc(q.carrier.name)} · ${usd(q.total)}/year, plus the $${FEE.amount} Bindswift fee charged right before binding. Your Bindswift broker confirms with the carrier. Once you're bound you can send certificates${a.gcReq==='Y'&&(a.interests||[])[0]?` to ${esc(a.interests[0].name)}`:''} from your phone.</p>
+    <div class="notice">Prototype: nothing was sent and no coverage is bound.</div>
+    <button class="btn btn-black btn-block" type="button" id="closeModal">Done</button>`;
+  $('#modal').classList.add('on'); $('#closeModal').addEventListener('click',()=>$('#modal').classList.remove('on'));
+}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'){$('#modal').classList.remove('on');$('#modalBody').className='card'}});
+
+/* ---------- motion ---------- */
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+let io=null;
+function reveal(){
+  const els=document.querySelectorAll('[data-reveal]:not(.in)');
+  if(reduceMotion||!('IntersectionObserver' in window)){els.forEach(e=>e.classList.add('in'));return}
+  if(!io) io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');countUp(e.target);io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  els.forEach(e=>io.observe(e));
+}
+function countUp(root){
+  root.querySelectorAll('[data-count]').forEach(el=>{
+    if(el._done) return; el._done=1;
+    const to=+el.dataset.count, pre=el.dataset.pre||'', suf=el.dataset.suf||'', t0=performance.now(), dur=1100;
+    const tick=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.textContent=pre+Math.round(to*e)+suf; if(k<1) requestAnimationFrame(tick)};
+    requestAnimationFrame(tick);
+  });
+}
+(function(){
+  const trades=APPETITE.filter(x=>x.score>=80).map(x=>x.cls);
+  const items=trades.map((t,i)=>`<span class="chip"><b>${String(i+1).padStart(2,'0')}</b>${esc(t)}</span>`).join('');
+  $('#marq').innerHTML=items+items;
+  const bar=$('#progress');
+  const onScroll=()=>{const h=document.documentElement; const p=h.scrollTop/Math.max(1,h.scrollHeight-h.clientHeight); bar.style.transform=`scaleX(${p})`};
+  window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  const hero=$('#hero');
+  if(hero&&!reduceMotion&&matchMedia('(pointer:fine)').matches){
+    hero.addEventListener('pointermove',e=>{const r=hero.getBoundingClientRect();hero.style.setProperty('--mx',(e.clientX-r.left)+'px');hero.style.setProperty('--my',(e.clientY-r.top)+'px')});
+  }
+})();
+
+/* ---------- boot ---------- */
+(function(){
+  const u=store.get('user'); if(u) setUser(u);
+  const d=store.get('draft'); if(d&&d.a){S.a=d.a;S.step=Math.min(d.step||0,STEPS.length-1)}
+  route();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ base }}/submissions">← All submissions</a></p>
+<h1>#{{ s.id }} · {{ s.legal_name }} <span class="pill {{ s.status }}">{{ s.status.replace('_',' ') }}</span></h1>
+<p class="muted">{{ TRADES[s.trade].l }} · class {{ s.class_code }} · {{ s.county }} · received {{ s.created_at.strftime('%m/%d/%Y %I:%M %p') }} UTC · ref {{ s.public_id }}</p>
+{% set bv = s.business_verification or {} %}
+<div class="card">
+  <h2 style="margin-top:0">Verification</h2>
+  <p>Email: {% if s.email_verified %}<b style="color:var(--green)">verified with a code</b>{% else %}<b class="err">not verified</b>{% endif %}</p>
+  <p>Business: <b class="{{ 'err' if bv.status in ['not_found','type_mismatch','unavailable','manual_check'] else '' }}" style="{{ 'color:var(--green)' if bv.status == 'verified' else '' }}">{{ (bv.status or 'not checked').replace('_',' ') }}</b>
+     {% if bv.reg_state %} · registered in <b>{{ bv.reg_state }}</b>{% if bv.reg_id %}, ID {{ bv.reg_id }}{% endif %} · <a href="{{ bv.registry_url }}" rel="noopener noreferrer" target="_blank">open the {{ bv.reg_state }} search</a>{% endif %}
+     {% if bv.registry_name %} · NY record: {{ bv.registry_name }} ({{ bv.registry_type }}, DOS ID {{ bv.dos_id }}, filed {{ bv.filed }}){% endif %}<br>
+     <span class="muted">{{ bv.note }}</span></p>
+  <p class="muted" style="font-size:13px">Check by hand: <a href="https://apps.dos.ny.gov/publicInquiry/" rel="noopener noreferrer" target="_blank">NY DOS</a> ·
+     <a href="https://www.njportal.com/DOR/BusinessNameSearch/" rel="noopener noreferrer" target="_blank">NJ</a> ·
+     <a href="https://www.sosnc.gov/online_services/search/by_title/_Business_Registration" rel="noopener noreferrer" target="_blank">NC</a> ·
+     <a href="https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx" rel="noopener noreferrer" target="_blank">DE</a> ·
+     <a href="https://egov.maryland.gov/businessexpress/entitysearch" rel="noopener noreferrer" target="_blank">MD</a></p>
+</div>
+{% if s.email_error %}<div class="card err">Email to broker failed: {{ s.email_error }}</div>{% endif %}
+
+<div class="grid">
+  <div class="card">
+    <h2 style="margin-top:0">Review</h2>
+    <form method="post" action="{{ base }}/submissions/{{ s.id }}/review">
+      <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+      <label for="note">Note (saved to the audit log)</label>
+      <textarea id="note" name="note" rows="3" maxlength="1000">{{ s.review_note or '' }}</textarea>
+      <p style="display:flex;gap:8px;flex-wrap:wrap">
+        {% if s.status == 'pending_review' %}
+          <button class="btn btn-amber" name="action" value="approve">Approve</button>
+          <button class="btn btn-red" name="action" value="reject">Reject</button>
+        {% elif s.status in ['approved','quoted','bind_requested'] %}
+          <button class="btn btn-dark" name="action" value="sent">Mark sent to market</button>
+          <button class="btn btn-light" name="action" value="reopen">Reopen</button>
+        {% elif s.status == 'sent_to_market' %}
+          <button class="btn btn-dark" name="action" value="bound">Mark bound</button>
+        {% else %}
+          <button class="btn btn-light" name="action" value="reopen">Reopen</button>
+        {% endif %}
+      </p>
+    </form>
+    {% if s.status in ['approved','sent_to_market','bound'] %}
+      <p><a class="btn btn-light" href="{{ base }}/submissions/{{ s.id }}/export.json">Download rater export (JSON)</a></p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Documents</h2>
+    {% for d in docs %}
+      <p><a class="btn btn-light" href="{{ base }}/submissions/{{ s.id }}/docs/{{ d.kind }}">{{ d.filename }}</a></p>
+    {% endfor %}
+    <p class="muted">Full FEIN is only in these PDFs (encrypted at rest). FEIN on file: {{ fein }}</p>
+  </div>
+</div>
+
+<div class="card" id="carriers">
+  <h2 style="margin-top:0">Carriers</h2>
+  <div class="grid">
+    <div>
+      <h3 style="margin:0 0 6px">Coterie <span class="muted" style="font-weight:400;font-size:13px">API · {{ carriers.coterie.env }}</span></h3>
+      {% if carriers.coterie.issues %}<ul class="err" style="margin:6px 0 10px;padding-left:18px">{% for i in carriers.coterie.issues %}<li>{{ i }}</li>{% endfor %}</ul>
+      {% else %}<p style="color:var(--green);margin:6px 0 10px">Looks in appetite.</p>{% endif %}
+      {% if s.status == 'bound' %}<p class="muted">Bound.</p>
+      {% elif not carriers.coterie.connected %}<p class="muted">Not connected yet. Add your Coterie keys to the environment.</p>
+      {% elif s.status in ['approved','sent_to_market','quoted'] %}
+        <form method="post" action="{{ base }}/submissions/{{ s.id }}/carriers/coterie/quote"><input type="hidden" name="csrf" value="{{ admin.csrf_token }}"><button class="btn btn-dark">Get Coterie quote</button></form>
+      {% else %}<p class="muted">Approve the submission to request a quote.</p>{% endif %}
+    </div>
+    <div>
+      <h3 style="margin:0 0 6px">NEXT <span class="muted" style="font-weight:400;font-size:13px">agent portal (no public API)</span></h3>
+      {% if carriers.next.issues %}<ul class="err" style="margin:6px 0 10px;padding-left:18px">{% for i in carriers.next.issues %}<li>{{ i }}</li>{% endfor %}</ul>
+      {% else %}<p style="color:var(--green);margin:6px 0 10px">Looks in appetite.</p>{% endif %}
+      <details><summary style="cursor:pointer;font-weight:600">Answer sheet for the NEXT portal</summary>
+        <dl style="margin-top:8px">{% for k, v in carriers.next.sheet %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl></details>
+    </div>
+  </div>
+  {% if policies %}<h3 id="policies" style="margin:18px 0 6px">Bound policies and certificates</h3>
+  {% for p in policies %}<div class="card" style="padding:12px 16px"><b>{{ p.carrier }}</b> · {{ p.policy_number or 'policy # not entered' }} ·
+    {{ 'Certificates on' if p.ready else 'Confirm details to turn on certificates' }} · {{ p.n_certs }} issued{% if p.n_pending %} · <b>{{ p.n_pending }} waiting for you</b>{% endif %}
+    · <a href="{{ base }}/submissions/{{ s.id }}/policies/{{ p.id }}">Open</a></div>{% endfor %}{% endif %}
+  <h3 style="margin:18px 0 6px">Quotes and binding</h3>
+  <p class="muted" style="margin:0 0 10px;font-size:13px">1 Send the quote → 2 contractor presses Bind → 3 you collect and record the $50 fee → 4 bind.</p>
+  {% for q in quotes %}
+  <div class="card" style="box-shadow:none;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <b>{{ q.carrier|title }}{% if q.environment %} <span class="muted">({{ q.environment }})</span>{% endif %}</b>
+      <span>{% if q.ok %}{% if q.total_due %}${{ "{:,.2f}".format(q.total_due) }} total{% elif q.premium %}${{ "{:,.0f}".format(q.premium) }}/yr{% endif %}{% else %}<span class="err">{{ q.error }}</span>{% endif %}</span>
+    </div>
+    {% if q.ok %}
+    <div class="muted" style="font-size:13px;margin:4px 0 10px">
+      {% if q.quote_id %}Quote {{ q.quote_id }} · {% endif %}
+      {% if q.application_url %}<a href="{{ q.application_url }}" rel="noopener noreferrer" target="_blank">Open in Coterie</a> · {% endif %}
+      {% if q.environment == 'upload' %}<a href="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/review">{{ 'Edit figures' if q.reviewed_at else 'Review figures (required before sending)' }}</a> ·
+        <a href="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/original.pdf">Original PDF</a> · {% endif %}
+      Sent: {{ q.sent_at.strftime('%m/%d %I:%M %p') if q.sent_at else 'no' }} ·
+      Bind requested: {{ (q.bind_requested_at.strftime('%m/%d %I:%M %p') ~ ' by ' ~ q.bind_request.signer) if q.bind_requested_at else 'no' }} ·
+      Fee: {{ ('$50 via ' ~ q.fee_method ~ (' (' ~ q.fee_reference ~ ')' if q.fee_reference else '')) if q.fee_paid_at else 'not collected' }} ·
+      Bound: {{ (q.bound_at.strftime('%m/%d') ~ (' · policy ' ~ q.policy_number if q.policy_number else '') ~ ' · ' ~ q.premium_billing ~ ' bill') if q.bound_at else 'no' }}
+      {% if q.bind_error %}<br><span class="err">{{ q.bind_error }}</span>{% endif %}
+    </div>
+    {% if not q.bound_at %}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/send"><input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+        <button class="btn btn-light btn-sm">{{ 'Resend quote link' if q.sent_at else '1 · Send quote to contractor' }}</button></form>
+      {% if not q.fee_paid_at %}
+      <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/fee" style="display:flex;gap:6px;align-items:center">
+        <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+        <select name="method" style="width:auto"><option value="card">Card</option><option value="zelle">Zelle</option><option value="ach">ACH</option><option value="check">Check</option><option value="cash">Cash</option><option value="other">Other</option></select>
+        <input name="reference" placeholder="Receipt / ref #" style="width:150px">
+        <button class="btn btn-light btn-sm">3 · Record $50 fee</button></form>
+      {% endif %}
+      {% if q.fee_paid_at and q.carrier == 'coterie' %}
+      <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/bind" style="display:flex;gap:6px;align-items:center">
+        <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+        <select name="interval" style="width:auto"><option>Annual</option><option>Monthly</option></select>
+        <button class="btn btn-amber btn-sm" {% if not q.bind_requested_at %}disabled title="Waiting for the contractor to press Bind"{% endif %}>4 · Bind with Coterie (agency bill)</button></form>
+      {% endif %}
+      {% if q.fee_paid_at %}
+      <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/mark-bound" style="display:flex;gap:6px;align-items:center">
+        <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+        <input name="policy_number" placeholder="Policy #" style="width:130px">
+        <select name="billing" style="width:auto"><option value="direct">Direct bill</option><option value="agency">Agency bill</option></select>
+        <button class="btn btn-light btn-sm">Mark bound (done in carrier portal)</button></form>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% if s.status in ['approved','quoted','bind_requested','sent_to_market'] %}
+  <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/upload" enctype="multipart/form-data"
+        class="card" style="box-shadow:none;margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+    <b style="width:100%">Upload an underwriter's quote (XPT, Hull/Bridge, other wholesalers)</b>
+    <input type="file" name="file" accept="application/pdf" required style="width:auto">
+    <label style="display:flex;gap:6px;align-items:center;font-weight:400;margin:0"><input type="checkbox" name="use_ai" value="1" style="width:auto"> Use AI reader (unfamiliar format)</label>
+    <button class="btn btn-dark btn-sm">Upload and extract</button>
+  </form>
+  <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/manual" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+    <input name="carrier" placeholder="Carrier (e.g. NEXT)" style="width:160px" required>
+    <input name="premium" placeholder="Annual premium" style="width:140px" required>
+    <input name="quote_ref" placeholder="Quote # (optional)" style="width:150px">
+    <button class="btn btn-light btn-sm">Add a quote from a carrier portal</button></form>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Answers</h2>
+  <dl>
+  {% for k, v in s.answers.items() %}
+    <dt>{{ k }}</dt><dd>{% if v is iterable and v is not string %}{{ v | join(', ') }}{% else %}{{ v }}{% endif %}</dd>
+  {% endfor %}
+  </dl>
+</div>
+
+<div class="grid">
+  <div class="card"><h2 style="margin-top:0">ACORD 125 fields ({{ s.acord125 | length }})</h2>
+    <table>{% for k, v in s.acord125.items() %}<tr><td><code>{{ k }}</code></td><td>{{ v }}</td></tr>{% endfor %}</table></div>
+  <div class="card"><h2 style="margin-top:0">ACORD 126 fields ({{ s.acord126 | length }})</h2>
+    <table>{% for k, v in s.acord126.items() %}<tr><td><code>{{ k }}</code></td><td>{{ v }}</td></tr>{% endfor %}</table></div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Audit trail</h2>
+  <table><thead><tr><th>When (UTC)</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead>
+  {% for l in log %}<tr><td>{{ l.created_at.strftime('%m/%d/%Y %I:%M:%S %p') }}</td><td>{{ l.email or 'contractor' }}</td><td>{{ l.action }}</td><td><code>{{ l.detail or '' }}</code></td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}
