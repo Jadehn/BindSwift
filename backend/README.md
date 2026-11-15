@@ -76,7 +76,7 @@ Only use `--forwarded-allow-ips='*'` when the platform's proxy is the only way i
 
 | Area | What it does |
 |---|---|
-| Admin passwords | argon2id hashes, 14-character minimum. Wrong emails take the same time as wrong passwords, so valid emails can't be guessed. |
+| Admin passwords | argon2id hashes, plus required 2FA. Wrong emails take the same time as wrong passwords, so valid emails can't be guessed. |
 | Two-factor | TOTP authenticator code required on every login. Each code works only once (replay blocked). The secret is encrypted in the database. |
 | Brute force | 5 failed logins per email (10 per IP) in 15 minutes locks login, even for the right password. Every attempt is logged. |
 | Sessions | Random 256-bit token in an `HttpOnly`, `Secure`, `SameSite=Strict`, `__Host-` cookie. Only a SHA-256 hash is stored server-side. 30-minute idle timeout, 8-hour max, one session per admin, server-side logout. |
@@ -184,7 +184,7 @@ Before going live, also confirm with each carrier that you're authorized to issu
    ```bash
    python -m scripts.create_admin you@howardanalytics.net
    ```
-   Pick a password of 14+ characters, then scan the QR code it prints with Google Authenticator, 1Password,
+   Pick a password, then scan the QR code it prints with Google Authenticator, 1Password,
    Authy or Microsoft Authenticator. The key is shown once.
 2. Go to `https://yourdomain.com` + `ADMIN_PATH` (default `/admin`; set it to something unguessable in production,
    like `/ops-7k2m9`). Enter email, password and the 6-digit code from the app.

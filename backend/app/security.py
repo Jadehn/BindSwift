@@ -97,7 +97,7 @@ def too_many_failures(email: str, iphash: str) -> bool:
              count(*) FILTER (WHERE email = %(email)s) AS by_email,
              count(*) FILTER (WHERE ip_hash = %(ip)s)  AS by_ip
            FROM login_attempts
-           WHERE NOT succeeded AND created_at > now() - make_interval(mins => %(mins)s)""",
+           WHERE NOT succeeded AND reason <> 'locked' AND created_at > now() - make_interval(mins => %(mins)s)""",
         {"email": email, "ip": iphash, "mins": s.login_window_minutes},
     )
     return row["by_email"] >= s.login_max_failures or row["by_ip"] >= s.login_max_failures * 2
