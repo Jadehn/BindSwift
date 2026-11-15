@@ -1045,25 +1045,25 @@ $('#pvPhone').addEventListener('click',e=>{if(e.target.id==='pvPhone')$('#pvPhon
 
 /* ---------- appetite ---------- */
 const APPETITE=[
-  {cls:'Hair salons',score:95,carriers:'NEXT, Hiscox, Coterie, Simply Business',note:'Ideal for instant quoting'},
-  {cls:'Barbershops',score:95,carriers:'NEXT, Hiscox, Coterie',note:'Main street business'},
-  {cls:'Nail, lash & braiding',score:95,carriers:'NEXT, Hiscox, Coterie',note:'Beauty services'},
-  {cls:'Consultants',score:95,carriers:'Hiscox, NEXT',note:'Professional services'},
-  {cls:'Marketing agencies',score:95,carriers:'Hiscox, NEXT',note:'Low-hazard office risk'},
-  {cls:'Bookkeepers & tax preparers',score:95,carriers:'Hiscox, NEXT',note:'Professional exposure only'},
-  {cls:'Doulas',score:90,carriers:'Hiscox',note:'Placed by Bindswift\'s broker before'},
-  {cls:'Wellness coaches',score:90,carriers:'Hiscox, NEXT',note:'Low liability exposure'},
-  {cls:'Retail stores',score:90,carriers:'Coterie, NEXT',note:'Good small business fit'},
-  {cls:'Small nonprofits',score:85,carriers:'Specialty nonprofit markets, Hiscox',note:'Community organizations'},
-  {cls:'Takeout restaurants',score:80,carriers:'Coterie, NEXT',note:'Usually quoted quickly'},
-  {cls:'Cafés & bakeries',score:80,carriers:'Coterie, NEXT',note:'Generally an easy class'},
-  {cls:'Sit-down restaurants',score:70,carriers:'Coterie, NEXT',note:'May need underwriter review'},
-  {cls:'Event venues',score:65,carriers:'Coterie, specialty markets',note:'Depends on the insurer'},
-  {cls:'Plumbers',score:50,carriers:'THREE, biBerk, E&S markets',note:'Often needs underwriting review'},
-  {cls:'Electricians',score:45,carriers:'THREE, biBerk, E&S markets',note:'Contractor class'},
-  {cls:'HVAC',score:40,carriers:'THREE, biBerk, E&S markets',note:'Higher hazard'},
-  {cls:'General contractors',score:30,carriers:'THREE, E&S markets',note:'Subcontractors add complexity'},
-  {cls:'Roofing',score:10,carriers:'E&S markets only',note:'Not offered right now'},
+  {cls:'Hair salons',score:95,carriers:'Online admitted insurers',note:'Ideal for instant quoting'},
+  {cls:'Barbershops',score:95,carriers:'Online admitted insurers',note:'Main street business'},
+  {cls:'Nail, lash & braiding',score:95,carriers:'Online admitted insurers',note:'Beauty services'},
+  {cls:'Consultants',score:95,carriers:'Online admitted insurers',note:'Professional services'},
+  {cls:'Marketing agencies',score:95,carriers:'Online admitted insurers',note:'Low-hazard office risk'},
+  {cls:'Bookkeepers & tax preparers',score:95,carriers:'Online admitted insurers',note:'Professional exposure only'},
+  {cls:'Doulas',score:90,carriers:'Online admitted insurers',note:'Placed by Bindswift\'s broker before'},
+  {cls:'Wellness coaches',score:90,carriers:'Online admitted insurers',note:'Low liability exposure'},
+  {cls:'Retail stores',score:90,carriers:'Online admitted insurers',note:'Good small business fit'},
+  {cls:'Small nonprofits',score:85,carriers:'Nonprofit programs and online insurers',note:'Community organizations'},
+  {cls:'Takeout restaurants',score:80,carriers:'Online admitted insurers',note:'Usually quoted quickly'},
+  {cls:'Cafés & bakeries',score:80,carriers:'Online admitted insurers',note:'Generally an easy class'},
+  {cls:'Sit-down restaurants',score:70,carriers:'Online admitted insurers',note:'May need underwriter review'},
+  {cls:'Event venues',score:65,carriers:'Admitted and specialty insurers',note:'Depends on the insurer'},
+  {cls:'Plumbers',score:50,carriers:'Contractor and specialty (E&S) insurers',note:'Often needs underwriting review'},
+  {cls:'Electricians',score:45,carriers:'Contractor and specialty (E&S) insurers',note:'Contractor class'},
+  {cls:'HVAC',score:40,carriers:'Contractor and specialty (E&S) insurers',note:'Higher hazard'},
+  {cls:'General contractors',score:30,carriers:'Contractor and specialty (E&S) insurers',note:'Subcontractors add complexity'},
+  {cls:'Roofing',score:10,carriers:'Specialty (E&S) insurers only',note:'Not offered right now'},
   {cls:'Trucking',score:5,carriers:'Commercial auto markets',note:'Not a GL product'},
   {cls:'Daycare',score:5,carriers:'Specialty markets',note:'Not offered right now'}];
 const TIERS=[
@@ -1080,7 +1080,7 @@ function renderAppetite(){
     <p style="margin-top:12px"><a class="btn btn-black" href="#check">Check your business <span class="arrow">→</span></a></p>
     ${TIERS.map(t=>{const xs=APPETITE.filter(x=>tierOf(x)===t);return `<section class="tier"><div class="tier-h"><h2>${esc(t.name)}</h2><span style="color:var(--muted);font-size:14px">${esc(t.sub)}</span></div>
       <div class="ap-grid">${xs.map(x=>`<div class="ap"><b>${esc(x.cls)}</b><div class="bar"><i style="width:${x.score}%"></i></div>
-        <small><b style="display:inline;font-size:13px;color:var(--ink)">${x.score}/100</b> · ${esc(x.note)}</small><small style="margin-top:4px">Typical markets: ${esc(x.carriers)}</small></div>`).join('')}</div></section>`}).join('')}
+        <small><b style="display:inline;font-size:13px;color:var(--ink)">${x.score}/100</b> · ${esc(x.note)}</small><small style="margin-top:4px">Usually placed with: ${esc(x.carriers)}</small></div>`).join('')}</div></section>`}).join('')}
     <div class="cta-band" style="margin-top:34px"><div><h2>Don't see your business?</h2><p>Start a quote anyway. Your broker reviews every application.</p></div>
       <a class="btn btn-white btn-lg" href="#quote">Start my quote <span class="arrow">→</span></a></div>`;
 }
@@ -1125,7 +1125,7 @@ function ckRender(){
   o.innerHTML=`<span class="tag">Your result · ${esc(r.x.cls)}</span>
     <div class="ck-score">${r.sc}<small>/100</small></div><div class="ck-verdict">${esc(r.v[0])}</div><p>${esc(r.v[1])}</p>
     <div class="ck-meter"><i style="width:${r.sc}%"></i></div>
-    <p style="margin-bottom:6px"><b style="color:#fff">Insurers that usually quote this:</b> ${esc(r.x.carriers)}</p>
+    <p style="margin-bottom:6px"><b style="color:#fff">Usually placed with:</b> ${esc(r.x.carriers)}</p>
     ${r.why.length?`<ul>${r.why.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:''}
     ${r.sc>=20?`<a class="btn btn-white btn-block" href="#quote">Start my quote <span class="arrow">→</span></a>`:`<a class="btn btn-white btn-block" href="#appetite">See who we insure</a>`}
     <p class="fine">An estimate from Bindswift's appetite guide, not a quote or a promise of coverage.</p>`;
