@@ -26,7 +26,7 @@ fc /b requirements.txt "%VENV%\requirements.installed" >nul 2>nul || (
 
 if not exist ".env" (
   echo No .env file found in %CD%
-  echo Copy .env.example to .env and fill it in.
+  echo Copy .env.example to .env (or your .env from your desktop PC into this folder), then fill it in.
   pause
   exit /b 1
 )
