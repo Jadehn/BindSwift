@@ -4,10 +4,81 @@
   "outputDirectory": "public",
   "functions": {
     "api/index.py": {
-      "maxDuration": 30,
+      "maxDuration": 300,
       "includeFiles": "{backend/**,index.html,forms/**,vendor/**}",
       "excludeFiles": "{backend/.env,backend/**/__pycache__/**}"
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/howard-analytics",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/howardanalytics",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/howardanalytics/",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/howard",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/ha",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/HA",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/Ha",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/jay",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    },
+    {
+      "source": "/Jay",
+      "destination": "/howard-analytics/",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/howard-analytics/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://formspree.io; form-action 'self' https://formspree.io; base-uri 'none'; frame-ancestors 'none'"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
 }

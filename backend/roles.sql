@@ -19,3 +19,5 @@ GRANT SELECT, INSERT                 ON login_attempts, audit_log TO bindswift_a
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO bindswift_app;
 
 REVOKE UPDATE, DELETE, TRUNCATE ON audit_log FROM bindswift_app;
+
+GRANT SELECT, INSERT, UPDATE         ON app_settings TO bindswift_app;

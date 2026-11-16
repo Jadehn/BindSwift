@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHBhdGggZD0iTTMgMjMuNWg4LjVNMSAzMmg5TTMgNDAuNWg4LjUiIHN0cm9rZT0iIzBBMEEwQSIgc3Ryb2tlLXdpZHRoPSIzLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0zNi4wMCA2LjgwIEw0MC4wNCAzLjg5IEw0My4xMCA3LjgyIEw0Ny44MCA2LjE3IEw0OS42MiAxMC44MCBMNTQuNjAgMTAuNTQgTDU1LjA0IDE1LjUwIEw1OS44OSAxNi42NSBMNTguOTIgMjEuNTMgTDYzLjI1IDI0LjAwIEw2MC45NCAyOC40MSBMNjQuNDAgMzIuMDAgTDYwLjk0IDM1LjU5IEw2My4yNSA0MC4wMCBMNTguOTIgNDIuNDcgTDU5Ljg5IDQ3LjM1IEw1NS4wNCA0OC41MCBMNTQuNjAgNTMuNDYgTDQ5LjYyIDUzLjIwIEw0Ny44MCA1Ny44MyBMNDMuMTAgNTYuMTggTDQwLjA0IDYwLjExIEwzNi4wMCA1Ny4yMCBBMjUuMiAyNS4yIDAgMCAxIDM2LjAwIDYuODBaIiBmaWxsPSIjMEEwQTBBIi8+PGNpcmNsZSBjeD0iMzYiIGN5PSIzMiIgcj0iMTkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIG9wYWNpdHk9Ii41Ii8+PHBhdGggZD0iTTIyLjYgMzIuNCAzMC40IDQwLjIgNDAuNCAyNi42aC00LjlsMTAuNy04LjEtNS42IDEwLjloNC43TDMwLjQgNDUuMiAyMC4yIDM1eiIgZmlsbD0iI0ZGRkZGRiIvPjwvc3ZnPg==">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Your quote · Bindswift</title>
@@ -31,7 +32,7 @@ button{width:100%;border:0;border-radius:999px;background:#0A0A0A;color:#fff;fon
 </style>
 </head>
 <body>
-<header><span>✓</span>Bindswift</header>
+<header><svg aria-hidden="true" width="28" height="28" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M3 23.5h8.5M1 32h9M3 40.5h8.5" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round"/><path d="M36.00 6.80 L40.04 3.89 L43.10 7.82 L47.80 6.17 L49.62 10.80 L54.60 10.54 L55.04 15.50 L59.89 16.65 L58.92 21.53 L63.25 24.00 L60.94 28.41 L64.40 32.00 L60.94 35.59 L63.25 40.00 L58.92 42.47 L59.89 47.35 L55.04 48.50 L54.60 53.46 L49.62 53.20 L47.80 57.83 L43.10 56.18 L40.04 60.11 L36.00 57.20 A25.2 25.2 0 0 1 36.00 6.80Z" fill="#FFFFFF"/><circle cx="36" cy="32" r="19" fill="none" stroke="#0A0A0A" stroke-width="1.5" opacity=".5"/><path d="M22.6 32.4 30.4 40.2 40.4 26.6h-4.9l10.7-8.1-5.6 10.9h4.7L30.4 45.2 20.2 35z" fill="#0A0A0A"/></svg>Bindswift</header>
 <main>
   <span class="tag">General liability quote</span>
   <h1>{{ q.legal_name }}</h1>
@@ -58,6 +59,8 @@ button{width:100%;border:0;border-radius:999px;background:#0A0A0A;color:#fff;fon
     {% endif %}
     {% if d.billing %}<div class="row"><span>Billing</span><span>{{ d.billing }}</span></div>{% endif %}
     <div class="row"><span>Insurance company</span><span>{{ carrier }}</span></div>
+    {% if d.quote_number and not d.quote_expires %}<div class="row"><span>{{ carrier }} quote reference</span><span>{{ d.quote_number }}</span></div>{% endif %}
+    {% if d.monthly %}<div class="row"><span>Monthly installment (insurer's plan)</span><span>${{ "{:,.2f}".format(d.monthly) }}</span></div>{% endif %}
     <div class="fee"><b>+ ${{ fee }} Bindswift service fee</b><br>Charged once, right before your policy is bound, under the fee agreement you signed. Not charged if no policy is bound.</div>
     {% if d.admitted and 'non' in d.admitted|lower %}<p class="muted" style="margin:10px 0 0">This insurer is non-admitted (surplus lines): policies aren't covered by the New York State security fund.</p>{% endif %}
   </div>

@@ -1,8 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
+{% if msg %}<div class="card" style="padding:12px 16px;border-left:4px solid #0A0A0A"><b>{{ msg }}</b></div>{% endif %}
 <p><a href="{{ base }}/submissions">← All submissions</a></p>
-<h1>#{{ s.id }} · {{ s.legal_name }} <span class="pill {{ s.status }}">{{ s.status.replace('_',' ') }}</span></h1>
-<p class="muted">{{ TRADES[s.trade].l }} · class {{ s.class_code }} · {{ s.county }} · received {{ s.created_at.strftime('%m/%d/%Y %I:%M %p') }} UTC · ref {{ s.public_id }}</p>
+<span class="eyebrow">{{ 'Short business profile' if s.kind == 'profile' else 'Full application' }} · #{{ s.id }}</span>
+<h1>{{ s.legal_name }} <span class="pill {{ s.status }}" style="vertical-align:middle">{{ s.status.replace('_',' ') }}</span></h1>
+<p class="muted">{{ TRADES[s.trade].l if s.trade in TRADES else s.trade }}{% if s.answers.kindLabel %} · {{ s.answers.kindLabel }}{% endif %}{% if s.class_code %} · class {{ s.class_code }}{% endif %} · {{ s.county }} · ${{ "{:,.0f}".format(s.annual_revenue) }} revenue · received {{ s.created_at.strftime('%m/%d/%Y %I:%M %p') }} UTC · ref {{ s.public_id }}</p>
+{% if s.kind == 'profile' %}{% set m = s.match or {} %}
+<div class="callout {{ 'good' if s.status in ['quoted','bind_requested','bound'] else ('warn' if s.status == 'needs_application' else '') }}">
+  <span class="eyebrow">Instant quote</span>
+  {% if s.status == 'quoting' %}<p style="margin:6px 0 0"><b>Hiscox is pricing this right now.</b> Refresh in a minute.</p>
+  {% elif m.route == 'instant' and s.status in ['quoted','bind_requested','bound'] %}<p style="margin:6px 0 0"><b>Quoted online by Hiscox</b> and shown to the client with a bind link. See Quotes below.</p>
+  {% elif s.status == 'superseded' %}<p style="margin:6px 0 0"><b>{{ s.review_note }}.</b></p>
+  {% else %}<p style="margin:6px 0 4px"><b>{{ 'Matched Hiscox, but no online quote.' if m.route == 'instant' else 'Not matched to an online insurer.' }}</b>
+     The client was asked for the full ACORD application, for your MGA partners.</p>
+     {% if m.reasons %}<ul style="margin:4px 0 0;padding-left:18px">{% for r in m.reasons %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}{% endif %}
+</div>{% endif %}
 {% set bv = s.business_verification or {} %}
 <div class="card">
   <h2 style="margin-top:0">Verification</h2>
@@ -46,6 +58,9 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">Documents</h2>
+    <form method="post" action="{{ base }}/submissions/{{ s.id }}/acords" style="margin-bottom:10px">
+      <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+      <button class="btn btn-dark btn-sm">{{ 'Generate ACORD 125 + 126 from this profile' if s.kind == 'profile' else 'Rebuild ACORD 125 + 126' }}</button></form>
     {% for d in docs %}
       <p><a class="btn btn-light" href="{{ base }}/submissions/{{ s.id }}/docs/{{ d.kind }}">{{ d.filename }}</a></p>
     {% endfor %}
@@ -64,6 +79,17 @@
       {% elif not carriers.coterie.connected %}<p class="muted">Not connected yet. Add your Coterie keys to the environment.</p>
       {% elif s.status in ['approved','sent_to_market','quoted'] %}
         <form method="post" action="{{ base }}/submissions/{{ s.id }}/carriers/coterie/quote"><input type="hidden" name="csrf" value="{{ admin.csrf_token }}"><button class="btn btn-dark">Get Coterie quote</button></form>
+      {% else %}<p class="muted">Approve the submission to request a quote.</p>{% endif %}
+    </div>
+    <div>
+      <h3 style="margin:0 0 6px">Hiscox <span class="muted" style="font-weight:400;font-size:13px">agent portal · stops at the price</span></h3>
+      {% if carriers.hiscox.issues %}<ul class="err" style="margin:6px 0 10px;padding-left:18px">{% for i in carriers.hiscox.issues %}<li>{{ i }}</li>{% endfor %}</ul>
+      {% else %}<p style="color:var(--green);margin:6px 0 10px">Looks in appetite.</p>{% endif %}
+      {% if s.status == 'bound' %}<p class="muted">Bound.</p>
+      {% elif not carriers.hiscox.connected %}<p class="muted">Not connected yet. Add HISCOX_EMAIL and HISCOX_PASSWORD to the environment.</p>
+      {% elif s.status in ['approved','sent_to_market','quoted'] %}
+        <form method="post" action="{{ base }}/submissions/{{ s.id }}/carriers/hiscox/quote"><input type="hidden" name="csrf" value="{{ admin.csrf_token }}"><button class="btn btn-dark">Get Hiscox quote</button></form>
+        <p class="muted" style="font-size:13px">Takes about 20–40 seconds. Bindswift fills Hiscox's online application and reads the price; you bind in the portal.</p>
       {% else %}<p class="muted">Approve the submission to request a quote.</p>{% endif %}
     </div>
     <div>
@@ -88,7 +114,8 @@
     </div>
     {% if q.ok %}
     <div class="muted" style="font-size:13px;margin:4px 0 10px">
-      {% if q.quote_id %}Quote {{ q.quote_id }} · {% endif %}
+      {% if q.quote_id %}{{ 'Hiscox reference' if q.carrier == 'hiscox' else 'Quote' }} {{ q.quote_id }} · {% endif %}
+      {% if (q.details or {}).monthly %}${{ "{:,.2f}".format(q.details.monthly) }}/mo · {% endif %}
       {% if q.application_url %}<a href="{{ q.application_url }}" rel="noopener noreferrer" target="_blank">Open in Coterie</a> · {% endif %}
       {% if q.environment == 'upload' %}<a href="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/review">{{ 'Edit figures' if q.reviewed_at else 'Review figures (required before sending)' }}</a> ·
         <a href="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/original.pdf">Original PDF</a> · {% endif %}
@@ -122,6 +149,9 @@
         <select name="billing" style="width:auto"><option value="direct">Direct bill</option><option value="agency">Agency bill</option></select>
         <button class="btn btn-light btn-sm">Mark bound (done in carrier portal)</button></form>
       {% endif %}
+      <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/sample-policy" title="A practice policy for testing certificates. Nothing is bound; certificates are stamped SAMPLE ONLY.">
+        <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+        <button class="btn btn-light btn-sm">Sample policy → certificates</button></form>
     </div>
     {% endif %}
     {% endif %}
@@ -154,12 +184,12 @@
   </dl>
 </div>
 
-<div class="grid">
+{% if s.kind != 'profile' %}<div class="grid">
   <div class="card"><h2 style="margin-top:0">ACORD 125 fields ({{ s.acord125 | length }})</h2>
     <table>{% for k, v in s.acord125.items() %}<tr><td><code>{{ k }}</code></td><td>{{ v }}</td></tr>{% endfor %}</table></div>
   <div class="card"><h2 style="margin-top:0">ACORD 126 fields ({{ s.acord126 | length }})</h2>
     <table>{% for k, v in s.acord126.items() %}<tr><td><code>{{ k }}</code></td><td>{{ v }}</td></tr>{% endfor %}</table></div>
-</div>
+</div>{% endif %}
 
 <div class="card">
   <h2 style="margin-top:0">Audit trail</h2>

@@ -10,11 +10,14 @@ portal's appetite checker; they change.
 """
 
 NEXT_TRADES = {"remodel", "carpentry", "handyman", "paint_int", "paint_ext", "roofing", "tile", "hvac"}
+MAIN_STREET = {"salon", "barber", "beauty", "consultant", "marketing", "bookkeeping", "doula", "wellness", "retail"}
 
 
 def eligibility(a: dict) -> list[str]:
     out = []
     areas = set(a.get("areas") or [])
+    if a.get("trade") in MAIN_STREET:   # NEXT's New York contractor exclusion doesn't apply
+        areas = set()
     # NEXT's contractor guide lists "performs work in the state of New York" as ineligible.
     if areas & {"Brooklyn", "Queens", "Manhattan", "Bronx", "Staten Island", "Long Island", "Westchester"}:
         out.append("Works in New York State: NEXT's contractor guide lists this as ineligible. "
@@ -31,9 +34,14 @@ def eligibility(a: dict) -> list[str]:
         out.append("Exterior work above 30 feet (3 stories).")
     if "hazmat" in (a.get("opsChecks") or []):
         out.append("Hazardous material abatement or remediation.")
-    if a.get("trade") not in NEXT_TRADES:
+    if a.get("trade") not in NEXT_TRADES | MAIN_STREET:
         out.append("Trade isn't on NEXT's highlighted contractor list. Confirm in the appetite checker.")
     return out
+
+
+def _details(a: dict) -> list[str]:
+    from ..acord_map import class_details_dict
+    return class_details_dict(a)
 
 
 def answer_sheet(a: dict) -> list[tuple[str, str]]:
@@ -52,6 +60,7 @@ def answer_sheet(a: dict) -> list[tuple[str, str]]:
         ("Annual payroll", f"${float(a.get('payroll') or 0):,.0f}"),
         ("Employees (FT / PT)", f"{a.get('ft', 0)} / {a.get('pt', 0)}"),
         ("Subcontractor costs", f"${float(a.get('subCost') or 0):,.0f}"),
+        ("Class details", " ".join(_details(a)) or "None"),
         ("Claims in last 5 yrs", str(a.get("losses", "0"))),
         ("Limits", occ),
         ("Start date", str(a.get("effDate", ""))),

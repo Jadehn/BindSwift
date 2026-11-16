@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     # Paths
     acord125_pdf: Path = BASE_DIR / "forms" / "ACORD_125.pdf"
     acord126_pdf: Path = BASE_DIR / "forms" / "ACORD_126.pdf"
+    acord25_pdf: Path = BASE_DIR / "forms" / "ACORD_25.pdf"
     frontend_dir: Path = BASE_DIR.parent  # serves ../index.html
 
     # Producer info printed on the forms
@@ -66,9 +67,14 @@ class Settings(BaseSettings):
     coterie_akhash: str = ""
     coterie_base_url: str = ""                # override only for testing
     coterie_bind_path: str = ""               # default "/{quote_id}/bind"; confirm in sandbox
+    hiscox_email: str = ""                    # Hiscox agent portal login (environment only, never the repo)
+    hiscox_password: str = ""
+    site_mode: str = "live"                   # "demo": the public site shows the demo even with a backend
+    hiscox_start_url: str = ""                # optional: the link the partner page's Sign in button opens
     fee_amount: int = 50
     anthropic_api_key: str = ""               # optional: AI reading of unfamiliar quote formats
     anthropic_model: str = "claude-sonnet-5-5"
+    eligibility_model: str = "claude-haiku-5-5"   # free "describe your business" check: small and fast
     max_upload_bytes: int = 4_000_000         # Vercel caps request bodies at 4.5 MB
     offer_days: int = 14                      # how long a quote link stays valid                  # JSON: {"handyman":"<AKHash>", "plumbing":"<AKHash>", ...}
 

@@ -31,6 +31,9 @@ STATUS_TEXT = {
     "bind_requested": "Binding in progress",
     "bound": "Covered",
     "rejected": "Closed",
+    "quoting": "Getting your instant quote",
+    "needs_application": "We need a few more details",
+    "superseded": "Continued in your full application",
 }
 CLIENT_DOCS = {  # what a contractor may download from their own submission (never the editable copies)
     "summary": "Your application answers",

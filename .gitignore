@@ -7,3 +7,8 @@ __pycache__/
 node_modules/
 *.log
 .DS_Store
+
+# Network captures (may contain tokens/form data) - never commit
+*.har
+fc captures/
+backend/fc captures/

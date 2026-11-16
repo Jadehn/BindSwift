@@ -248,3 +248,23 @@ CREATE INDEX IF NOT EXISTS submissions_email_idx ON submissions(contact_email);
 -- Encrypted copies of the client's own links, so the signed-in dashboard can open them
 ALTER TABLE carrier_quotes ADD COLUMN IF NOT EXISTS offer_token_enc BYTEA;
 ALTER TABLE policies       ADD COLUMN IF NOT EXISTS portal_token_enc BYTEA;
+
+-- Short business profiles and instant quotes (safe to re-run)
+ALTER TABLE submissions ADD COLUMN IF NOT EXISTS kind        TEXT  NOT NULL DEFAULT 'full';   -- 'profile' or 'full'
+ALTER TABLE submissions ADD COLUMN IF NOT EXISTS match       JSONB;                           -- which carriers could quote it, and why not
+ALTER TABLE submissions ADD COLUMN IF NOT EXISTS profile_id  BIGINT REFERENCES submissions(id); -- full application that continues a profile
+ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_status_check;
+ALTER TABLE submissions ADD CONSTRAINT submissions_status_check CHECK (status IN
+  ('pending_review','approved','rejected','sent_to_market','quoted','bind_requested','bound',
+   'quoting','needs_application','superseded'));
+
+-- Switches the broker flips in the admin (e.g. live instant quotes on/off). Safe to re-run.
+CREATE TABLE IF NOT EXISTS app_settings (
+    key         TEXT        PRIMARY KEY,
+    value       JSONB       NOT NULL,
+    updated_by  INT REFERENCES admins(id),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 2026-11-16: practice policies (certificates from them are stamped SAMPLE ONLY)
+ALTER TABLE policies ADD COLUMN IF NOT EXISTS sample BOOLEAN NOT NULL DEFAULT FALSE;
