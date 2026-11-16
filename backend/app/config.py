@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     # Paths
     acord125_pdf: Path = BASE_DIR / "forms" / "ACORD_125.pdf"
     acord126_pdf: Path = BASE_DIR / "forms" / "ACORD_126.pdf"
+    acord25_pdf: Path = BASE_DIR / "forms" / "ACORD_25.pdf"
     frontend_dir: Path = BASE_DIR.parent  # serves ../index.html
 
     # Producer info printed on the forms

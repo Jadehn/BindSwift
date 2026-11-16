@@ -177,3 +177,14 @@ Repo files use **CRLF** line endings, so keep them.
 3. **Deploy:** set up the Vercel project, set the env vars there, and add the Namecheap DNS records for bindswift.com. After that, `/howard-analytics/`, `/ha` and `/jay` go live.
 4. Commit to git when the user asks; the commit message needs the attribution lines.
 5. **Optional:** add more carriers (Coterie, Blitz, NEXT) to the instant route as their quoting gets automated, and widen `appetite.CLASSES`.
+
+---
+
+## 9. Update 2026-11-15 (late): Blitz quoting via First Connect
+
+- New: `backend/app/integrations/firstconnect.py`, `backend/app/integrations/blitz.py`, `backend/scripts/firstconnect_connect.py`, `backend/scripts/blitz_replay_check.py`, `backend/scripts/blitz_test_quote.py`, `docs/blitz-api-notes.md`. Read the notes file first.
+- Replay check against the recorded session: ALL MATCH, same $1,281 quote.
+- Not yet wired into the website or appetite. Next: add a contractor class list (Blitz class codes) to `appetite.py`, a "few more questions" step on the site that shows `BlitzNeedsInput.questions` to the client (attestations with their clauses), then call `blitz.create_quote` from `main.py` like Hiscox (own advisory lock `bindswift-blitz`).
+- Blitz also has Retail & Services and Restaurants programs; the same driver works once their questions are recorded.
+- Coterie: portal automation isn't practical (Okta via First Connect, 1-hour tokens). Get Coterie partner API keys instead.
+- Live test needs (at home): `pip install playwright` + `playwright install chromium`, run `firstconnect_connect.py`, then `blitz_test_quote.py "fc captures/blitz-sample.json"`. That creates a real (unbound) Blitz application under Jaden's producer account.

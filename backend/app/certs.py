@@ -74,8 +74,14 @@ def needs_approval(p: dict, ai: bool, pnc: bool, wos: bool) -> list[str]:
 
 
 def certificate_pdf(p: dict, c: dict, number: str) -> bytes:
-    """One-page Certificate of Liability Insurance (Bindswift layout).
-    If you have an ACORD 25 license and template, this is where it would be filled instead."""
+    """Certificate of Liability Insurance: the ACORD 25 when forms/ACORD_25.pdf is present, else Bindswift's layout."""
+    if get_settings().acord25_pdf.exists():
+        return acord25_pdf(coi_data(p, c, number), sample=bool(p.get("sample")))
+    return certificate_pdf_basic(p, c, number)
+
+
+def certificate_pdf_basic(p: dict, c: dict, number: str) -> bytes:
+    """One-page Certificate of Liability Insurance (Bindswift layout, used when there's no ACORD 25 template)."""
     s = get_settings()
     buf = io.BytesIO()
     cv = canvas.Canvas(buf, pagesize=letter)
@@ -192,3 +198,144 @@ def certificate_pdf(p: dict, c: dict, number: str) -> bytes:
     cv.drawString(x0, y - 12, f"Issued through Bindswift · {s.agency_name} · Verify this certificate by contacting the producer.")
     cv.save()
     return buf.getvalue()
+
+
+# ---------------------------------------------------------------- ACORD 25
+def producer_block(sample: bool = False) -> dict:
+    """The PRODUCER box. Real certificates use your .env (AGENCY_NAME, AGENCY_ADDRESS, PRODUCER_*).
+    Samples use a made-up agency so no personal details appear on a demo."""
+    if sample:
+        return {"name": "Bindswift Demo Agency", "lines": ["100 Sample Street", "New York, NY 10001"],
+                "contact": "Demo Producer", "phone": "(000) 000-0000", "email": "demo@example.com", "signature": "Demo Producer"}
+    s = get_settings()
+    lines = [ln.strip() for ln in (s.agency_address or "").replace("\\n", "\n").split("\n") if ln.strip()]
+    return {"name": s.agency_name, "lines": lines[:2], "contact": s.producer_name, "phone": s.producer_phone,
+            "email": s.producer_email, "signature": s.producer_name}
+
+
+def _split_addr(addr: str) -> list[str]:
+    parts = [x.strip() for x in (addr or "").split(",") if x.strip()]
+    if len(parts) <= 1:
+        return parts
+    return [parts[0], ", ".join(parts[1:])]
+
+
+def coi_data(p: dict, c: dict, number: str) -> dict:
+    """Everything an ACORD 25 needs, from a policy row and a certificate row."""
+    def mdy(d):
+        return d.strftime("%m/%d/%Y") if d else ""
+    remarks = []
+    if p.get("ops_description"):
+        remarks.append(p["ops_description"])
+    if c.get("project"):
+        remarks.append(f"Re: {c['project']}")
+    extras = [n for n, on in (("an additional insured", c.get("want_ai")), ("primary and non-contributory", c.get("want_pnc")),
+                              ("entitled to a waiver of subrogation", c.get("want_wos"))) if on]
+    if extras:
+        remarks.append("The certificate holder is " + "; ".join(extras) +
+                       " where required by written contract, per the policy's endorsement(s).")
+    return {"sample": bool(p.get("sample")), "number": number, "date": datetime.now(NY).strftime("%m/%d/%Y"),
+            "producer": producer_block(bool(p.get("sample"))),
+            "insured": {"name": p["insured_name"], "lines": _split_addr(p["insured_address"])},
+            "insurer": {"name": p["carrier"], "naic": p.get("naic") or ""},
+            "gl": {"form": p.get("policy_form") or "Occurrence", "number": p.get("policy_number") or "",
+                   "eff": mdy(p.get("effective_date")), "exp": mdy(p.get("expiration_date")),
+                   "limits": p.get("limits") or {}, "ai": bool(c.get("want_ai")), "wos": bool(c.get("want_wos"))},
+            "remarks": " ".join(x.rstrip(".") + "." for x in remarks),
+            "holder": {"name": c["holder_name"], "lines": _split_addr(c["holder_address"])}}
+
+
+GL_LIMIT_FIELDS = {"each_occurrence": "GeneralLiability_EachOccurrence_LimitAmount_A",
+                   "damage_rented": "GeneralLiability_FireDamageRentedPremises_EachOccurrenceLimitAmount_A",
+                   "medical": "GeneralLiability_MedicalExpense_EachPersonLimitAmount_A",
+                   "personal_advertising": "GeneralLiability_PersonalAndAdvertisingInjury_LimitAmount_A",
+                   "general_aggregate": "GeneralLiability_GeneralAggregate_LimitAmount_A",
+                   "products_aggregate": "GeneralLiability_ProductsAndCompletedOperations_AggregateLimitAmount_A"}
+
+
+def _money(v) -> str:
+    t = str(v or "").replace("$", "").replace(",", "").strip()
+    try:
+        return f"{float(t):,.0f}"
+    except ValueError:
+        return str(v or "")
+
+
+def acord25_values(d: dict) -> dict:
+    """Field name (as on the ACORD 25 widget) -> value."""
+    pr, ins, gl, h = d["producer"], d["insured"], d["gl"], d["holder"]
+    v = {"Form_CompletionDate_A[0]": d["date"],
+         "Producer_FullName_A[0]": pr["name"],
+         "Producer_MailingAddress_LineOne_A[0]": (pr["lines"] + ["", ""])[0],
+         "Producer_MailingAddress_LineTwo_A[0]": (pr["lines"] + ["", ""])[1],
+         "Producer_ContactPerson_FullName_A[0]": pr["contact"],
+         "Producer_ContactPerson_PhoneNumber_A[0]": pr["phone"],
+         "Producer_ContactPerson_EmailAddress_A[0]": pr["email"],
+         "NamedInsured_FullName_A[0]": ins["name"],
+         "NamedInsured_MailingAddress_LineOne_A[0]": (ins["lines"] + ["", ""])[0],
+         "NamedInsured_MailingAddress_LineTwo_A[0]": (ins["lines"] + ["", ""])[1],
+         "Insurer_FullName_A[0]": d["insurer"]["name"],
+         "Insurer_NAICCode_A[0]": d["insurer"]["naic"],
+         "CertificateOfInsurance_CertificateNumberIdentifier_A[0]": d["number"],
+         "GeneralLiability_InsurerLetterCode_A[0]": "A",
+         "GeneralLiability_CoverageIndicator_A[0]": "X",
+         ("GeneralLiability_ClaimsMadeIndicator_A[0]" if gl["form"].lower().startswith("claims")
+          else "GeneralLiability_OccurrenceIndicator_A[0]"): "X",
+         "GeneralLiability_GeneralAggregate_LimitAppliesPerPolicyIndicator_A[0]": "X",
+         "CertificateOfInsurance_GeneralLiability_AdditionalInsuredCode_A[0]": "Y" if gl["ai"] else "",
+         "Policy_GeneralLiability_SubrogationWaivedCode_A[0]": "Y" if gl["wos"] else "",
+         "Policy_GeneralLiability_PolicyNumberIdentifier_A[0]": gl["number"],
+         "Policy_GeneralLiability_EffectiveDate_A[0]": gl["eff"],
+         "Policy_GeneralLiability_ExpirationDate_A[0]": gl["exp"],
+         "CertificateOfLiabilityInsurance_ACORDForm_RemarkText_A[0]": d["remarks"],
+         "CertificateHolder_FullName_A[0]": h["name"],
+         "CertificateHolder_MailingAddress_LineOne_A[0]": (h["lines"] + ["", ""])[0],
+         "CertificateHolder_MailingAddress_LineTwo_A[0]": (h["lines"] + ["", ""])[1]}
+    for k, f in GL_LIMIT_FIELDS.items():
+        if gl["limits"].get(k):
+            v[f + "[0]"] = _money(gl["limits"][k])
+    return {k: x for k, x in v.items() if x}
+
+
+def acord25_pdf(d: dict, sample: bool = False) -> bytes:
+    """Fill the ACORD 25 and flatten it: every value drawn on the page, form fields removed."""
+    from pypdf import PdfReader, PdfWriter
+    from .pdfs import _draw_signature, _draw_value, _strip_widgets, _widget_rects
+    reader = PdfReader(str(get_settings().acord25_pdf))
+    rects = _widget_rects(reader)
+    kinds = {}
+    for annot in reader.pages[0].get("/Annots") or []:
+        o = annot.get_object()
+        par = o.get("/Parent").get_object() if o.get("/Parent") else {}
+        name = o.get("/T") or par.get("/T")
+        kinds[name] = (o.get("/FT") or par.get("/FT"), int(o.get("/Ff") or par.get("/Ff") or 0))
+    writer = PdfWriter()
+    writer.append(reader)
+    box = reader.pages[0].mediabox
+    buf = io.BytesIO()
+    cv = canvas.Canvas(buf, pagesize=(float(box.width), float(box.height)))
+    sig = "Producer_AuthorizedRepresentative_Signature_A[0]"
+    for name, val in acord25_values(d).items():
+        if name not in rects:
+            continue
+        _, r = rects[name]
+        ft, ff = kinds.get(name, (None, 0))
+        _draw_value(cv, r, str(val), bool(ff & 4096) or (r[3] - r[1]) > 30, ft == "/Btn")
+    if sig in rects:
+        _draw_signature(cv, rects[sig][1], d["producer"]["signature"])
+    if sample or d.get("sample"):
+        cv.saveState()
+        cv.setFillColorRGB(0.85, 0.1, 0.1, alpha=0.18)
+        cv.setFont("Helvetica-Bold", 54)
+        cv.translate(float(box.width) / 2, float(box.height) / 2)
+        cv.rotate(35)
+        cv.drawCentredString(0, 20, "SAMPLE ONLY")
+        cv.setFont("Helvetica-Bold", 22)
+        cv.drawCentredString(0, -18, "NOT EVIDENCE OF INSURANCE")
+        cv.restoreState()
+    cv.save()
+    writer.pages[0].merge_page(PdfReader(io.BytesIO(buf.getvalue())).pages[0])
+    _strip_widgets(writer)
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()

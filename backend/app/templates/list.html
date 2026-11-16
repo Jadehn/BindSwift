@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% if msg %}<div class="card" style="padding:12px 16px;border-left:4px solid #0A0A0A"><b>{{ msg }}</b></div>{% endif %}
 <div class="page-head">
   <div><span class="eyebrow">General liability · New York</span><h1>Submissions</h1></div>
   <form method="post" action="{{ base }}/settings/instant-quotes" class="switch-card {{ 'is-on' if instant_on }}">

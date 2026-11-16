@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
+{% if msg %}<div class="card" style="padding:12px 16px;border-left:4px solid #0A0A0A"><b>{{ msg }}</b></div>{% endif %}
+{% if p.sample %}<div class="card" style="padding:12px 16px;background:#FFF6D6;border-color:#E9D27A"><b>Sample policy.</b> Made from a quote for testing and demos. Nothing is bound, and every certificate from it is stamped SAMPLE ONLY.</div>{% endif %}
 <p><a href="{{ base }}/submissions/{{ sid }}#policies">← #{{ sid }} {{ p.insured_name }}</a></p>
 <h1>Policy and certificates</h1>
 <p class="muted">Certificates print exactly what's on this page. Check it against the carrier's declarations page, then turn on certificates.
@@ -31,6 +33,29 @@
   <label class="chk"><input type="checkbox" name="blanket_wos" value="1" {{ 'checked' if p.blanket_wos }}> Waiver of subrogation</label>
   <label class="chk" style="margin-top:12px"><input type="checkbox" name="ready" value="1" {{ 'checked' if p.ready }}> <b>Details match the dec page. Let the contractor issue certificates.</b></label>
   <button class="btn btn-dark" style="margin-top:12px">Save</button>
+</form>
+<h3>Issue a certificate (ACORD 25)</h3>
+<form method="post" action="{{ base }}/submissions/{{ sid }}/policies/{{ p.id }}/issue-certificate" class="card">
+  <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+  <div class="grid">
+    <div>
+      <label>Certificate holder</label><input name="holder_name" required maxlength="120" placeholder="Fulton Street Realty LLC">
+      <label>Street</label><input name="holder_street" required maxlength="120">
+      <div class="grid3"><div><label>City</label><input name="holder_city" required maxlength="60"></div>
+        <div><label>State</label><input name="holder_state" value="NY" maxlength="2"></div>
+        <div><label>ZIP</label><input name="holder_zip" required maxlength="10"></div></div>
+    </div>
+    <div>
+      <label>Holder email (optional)</label><input name="holder_email" type="email" maxlength="254">
+      <label>Project / location (optional, prints in Remarks)</label><input name="project" maxlength="200">
+      <label class="chk"><input type="checkbox" name="ai" value="1"> Additional insured {% if not p.blanket_ai %}<span class="muted">(no blanket endorsement)</span>{% endif %}</label>
+      <label class="chk"><input type="checkbox" name="pnc" value="1"> Primary &amp; non-contributory {% if not p.blanket_pnc %}<span class="muted">(no blanket endorsement)</span>{% endif %}</label>
+      <label class="chk"><input type="checkbox" name="wos" value="1"> Waiver of subrogation {% if not p.blanket_wos %}<span class="muted">(no blanket endorsement)</span>{% endif %}</label>
+      <label class="chk"><input type="checkbox" name="confirmed" value="1"> I confirmed with the carrier that any endorsement ticked above is on the policy</label>
+    </div>
+  </div>
+  <button class="btn btn-dark" style="margin-top:10px">Issue certificate</button>
+  <span class="muted" style="margin-left:8px">Or <a href="{{ base }}/coi">fill an ACORD 25 by hand</a>.</span>
 </form>
 <h3>Certificates ({{ certs|length }})</h3>
 {% if not certs %}<p class="muted">None yet.</p>{% endif %}

@@ -186,6 +186,50 @@ async def _json_body(request: Request, limit: int = 4000):
     return raw if len(raw) <= limit else None
 
 
+@app.post("/api/demo/certificate")
+async def demo_certificate(request: Request):
+    """Demo mode: a SAMPLE ACORD 25 for the demo policy, with the holder the visitor typed. No database,
+    a made-up agency and insurer, and a SAMPLE ONLY / NOT EVIDENCE OF INSURANCE stamp."""
+    try:
+        b = await request.json()
+    except Exception:
+        b = {}
+    if not isinstance(b, dict):
+        b = {}
+    g = lambda k, n=120: str(b.get(k) or "").strip()[:n]
+    holder, street, city, zip_ = g("holderName"), g("street"), g("city", 60), g("zip", 10)
+    if not (holder and street and city and zip_):
+        return JSONResponse({"error": "Enter the certificate holder's name and full address."}, status_code=422)
+    if await run_in_threadpool(_limited, "demo_coi", ip_hash(request), 40):
+        return JSONResponse({"error": "Too many sample certificates. Try again in an hour."}, status_code=429)
+    from .certs import acord25_pdf, producer_block
+    if not settings.acord25_pdf.exists():
+        return JSONResponse({"error": "The ACORD 25 template isn't installed."}, status_code=503)
+    import secrets as _s
+    ai, wos = bool(b.get("ai")), bool(b.get("wos"))
+    remarks = [g("ops", 300) or "Business operations of the named insured."]
+    if g("project", 200):
+        remarks.append("Re: " + g("project", 200))
+    if ai or wos:
+        remarks.append("The certificate holder is " + "; ".join(x for x, on in (("an additional insured", ai),
+                       ("entitled to a waiver of subrogation", wos)) if on) +
+                       " where required by written contract, per the policy's blanket endorsement(s).")
+    d = {"sample": True, "number": "SAMPLE-" + _s.token_hex(3).upper(), "date": datetime.now().strftime("%m/%d/%Y"),
+         "producer": producer_block(True),
+         "insured": {"name": g("insuredName") or "Doe Home Services Inc.", "lines": [g("insuredStreet") or "123 Sample Ave",
+                     g("insuredCityLine") or "Brooklyn, NY 11201"]},
+         "insurer": {"name": "Brightwater Specialty (demo)", "naic": "00000"},
+         "gl": {"form": "Occurrence", "number": "BWS-GL-0042817", "eff": "11/01/2026", "exp": "11/01/2027",
+                "limits": {"each_occurrence": "1,000,000", "damage_rented": "100,000", "medical": "5,000",
+                           "personal_advertising": "1,000,000", "general_aggregate": "2,000,000", "products_aggregate": "2,000,000"},
+                "ai": ai, "wos": wos},
+         "remarks": " ".join(x.rstrip(".") + "." for x in remarks),
+         "holder": {"name": holder, "lines": [street, f"{city}, {(g('state', 2) or 'NY').upper()} {zip_}"]}}
+    pdf = await run_in_threadpool(acord25_pdf, d, True)
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="Sample_COI_{d["number"]}.pdf"', "Cache-Control": "no-store"})
+
+
 @app.get("/api/config")
 def public_config():
     """Tells the page it's running against the live backend, and which checks are on."""

@@ -2,6 +2,7 @@
 approve/reject, encrypted document download, and an export for your raters."""
 import json
 import re
+from urllib.parse import quote_plus
 import secrets
 from pathlib import Path
 
@@ -137,7 +138,8 @@ def list_submissions(request: Request, status: str = "all", admin=Depends(requir
                       FROM submissions s WHERE s.kind = 'profile'""")
     from .appetite import hiscox_connected, instant_enabled
     return render(request, "list.html", admin=admin, rows=rows, status=status, statuses=STATUSES, counts=counts, kpi=kpi,
-                  instant_on=instant_enabled(), hiscox_on=hiscox_connected())
+                  instant_on=instant_enabled(), hiscox_on=hiscox_connected(),
+                  msg=str(request.query_params.get("msg", ""))[:300])
 
 
 @router.post("/settings/instant-quotes")
@@ -147,11 +149,22 @@ def toggle_instant(request: Request, on: str = Form("0", max_length=1), csrf: st
     carrier quote runs."""
     require_csrf(admin, csrf)
     value = on == "1"
-    db.run("""INSERT INTO app_settings (key, value, updated_by, updated_at) VALUES ('instant_quotes', %s::jsonb, %s, now())
-              ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()""",
-           (json.dumps(value), admin["id"]))
+    try:
+        db.run("""INSERT INTO app_settings (key, value, updated_by, updated_at) VALUES ('instant_quotes', %s::jsonb, %s, now())
+                  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()""",
+               (json.dumps(value), admin["id"]))
+    except Exception as e:                      # usually: schema.sql / roles.sql not run since the update
+        import logging
+        logging.getLogger("bindswift").exception("instant-quotes toggle failed")
+        name = type(e).__name__
+        hint = {"UndefinedTable": "the app_settings table is missing. Run backend/schema.sql",
+                "InsufficientPrivilege": "the app's database user can't write app_settings. Run backend/roles.sql"}.get(
+                    name, f"the database said {name}. Run backend/schema.sql, then backend/roles.sql")
+        return RedirectResponse(f"{get_settings().admin_path}/submissions?msg=" +
+                                quote_plus(f"Couldn't change live quotes: {hint}, then restart."), status_code=303)
     audit(admin["id"], "setting_changed", None, {"instant_quotes": value}, request)
-    return RedirectResponse(f"{get_settings().admin_path}/submissions", status_code=303)
+    return RedirectResponse(f"{get_settings().admin_path}/submissions?msg=" +
+                            quote_plus("Live instant quotes are " + ("on." if value else "off.")), status_code=303)
 
 
 @router.get("/submissions/{sid}", response_class=HTMLResponse)
@@ -178,7 +191,8 @@ def view_submission(request: Request, sid: int, admin=Depends(require_admin)):
                                  (SELECT count(*) FROM certificates c WHERE c.policy_id = p.id AND c.status = 'pending_approval') AS n_pending
                             FROM policies p WHERE submission_id = %s ORDER BY id""", (sid,))
     return render(request, "detail.html", admin=admin, s=sub, docs=docs, log=log, fein=fein_masked,
-                  statuses=STATUSES, carriers=carriers, quotes=quotes, policies=policies)
+                  statuses=STATUSES, carriers=carriers, quotes=quotes, policies=policies,
+                  msg=str(request.query_params.get("msg", ""))[:300])
 
 
 @router.post("/submissions/{sid}/carriers/coterie/quote")
@@ -536,7 +550,8 @@ def policy_page(request: Request, sid: int, pid: int, admin=Depends(require_admi
     p = _policy(sid, pid)
     certs = db.all_("""SELECT id, number, holder_name, holder_address, holder_email, project, want_ai, want_pnc, want_wos,
                               status, created_at, issued_at FROM certificates WHERE policy_id = %s ORDER BY created_at DESC""", (pid,))
-    return render(request, "policy.html", admin=admin, p=p, sid=sid, certs=certs, keys=LIMIT_KEYS)
+    return render(request, "policy.html", admin=admin, p=p, sid=sid, certs=certs, keys=LIMIT_KEYS,
+                  msg=str(request.query_params.get("msg", ""))[:300])
 
 
 @router.post("/submissions/{sid}/policies/{pid}")
@@ -614,3 +629,159 @@ def cert_pdf_admin(request: Request, sid: int, pid: int, cid: int, admin=Depends
         raise HTTPException(status_code=404)
     return Response(decrypt(c["pdf_enc"]), media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="COI_{c["number"]}.pdf"'})
+
+
+
+# ---------------- certificates (ACORD 25) and applications (ACORD 125/126) ----------------
+def _cert_number(pid: int, cid: int) -> str:
+    return f"BSW-{pid:04d}-{cid:05d}"
+
+
+@router.post("/submissions/{sid}/quotes/{qid}/sample-policy")
+def sample_policy(request: Request, sid: int, qid: int, csrf: str = Form(max_length=100), admin=Depends(require_admin)):
+    """A practice policy from a quote, for demos and testing certificates. Nothing is bound: the quote and
+    the submission keep their real status, and every certificate from it is stamped SAMPLE ONLY."""
+    from .certs import policy_from_bind
+    require_csrf(admin, csrf)
+    q = _quote(sid, qid)
+    existing = db.one("SELECT id FROM policies WHERE quote_id = %s", (qid,))
+    if existing:
+        return RedirectResponse(f"{get_settings().admin_path}/submissions/{sid}/policies/{existing['id']}", status_code=303)
+    sub = db.one("SELECT answers FROM submissions WHERE id = %s", (sid,))
+    pid = policy_from_bind(sid, {**q, "policy_number": f"SAMPLE-{qid:05d}"}, f"SAMPLE-{qid:05d}")
+    ops = (sub["answers"] or {}).get("opsDesc") or (sub["answers"] or {}).get("kindLabel") or ""
+    db.run("""UPDATE policies SET sample = TRUE, ready = TRUE, naic = COALESCE(naic, '00000'),
+                     ops_description = COALESCE(NULLIF(ops_description, ''), %s) WHERE id = %s""", (ops[:300], pid))
+    audit(admin["id"], "sample_policy_created", sid, {"quote": qid, "policy": pid}, request)
+    return RedirectResponse(f"{get_settings().admin_path}/submissions/{sid}/policies/{pid}", status_code=303)
+
+
+@router.post("/submissions/{sid}/policies/{pid}/issue-certificate")
+def cert_new(request: Request, sid: int, pid: int, holder_name: str = Form(max_length=120),
+             holder_street: str = Form(max_length=120), holder_city: str = Form(max_length=60),
+             holder_state: str = Form("NY", max_length=2), holder_zip: str = Form(max_length=10),
+             holder_email: str = Form("", max_length=254), project: str = Form("", max_length=200),
+             ai: str = Form(""), pnc: str = Form(""), wos: str = Form(""), confirmed: str = Form(""),
+             csrf: str = Form(max_length=100), admin=Depends(require_admin)):
+    """You issue a certificate yourself. Additional insured / P&NC / waiver are allowed when the policy has the
+    blanket endorsement, or when you tick that you've confirmed the endorsement with the carrier."""
+    from .certs import certificate_pdf, needs_approval
+    require_csrf(admin, csrf)
+    p = _policy(sid, pid)
+    back = f"{get_settings().admin_path}/submissions/{sid}/policies/{pid}"
+    if not (p["policy_number"] and p["effective_date"] and p["expiration_date"] and (p["limits"] or {}).get("each_occurrence")):
+        return RedirectResponse(back + "?msg=" + quote_plus("Fill in the policy number, dates and each-occurrence limit first."), status_code=303)
+    want = dict(want_ai=ai == "1", want_pnc=pnc == "1", want_wos=wos == "1")
+    needs = needs_approval(p, want["want_ai"], want["want_pnc"], want["want_wos"])
+    if needs and confirmed != "1":
+        return RedirectResponse(back + "?msg=" + quote_plus(
+            "This policy has no blanket " + ", ".join(needs) + " endorsement. Tick the confirmation if the carrier added it."), status_code=303)
+    addr = f"{holder_street.strip()}, {holder_city.strip()}, {holder_state.upper()[:2]} {holder_zip.strip()}"
+    row = db.one("""INSERT INTO certificates (policy_id, holder_name, holder_address, holder_email, project, want_ai, want_pnc,
+                                              want_wos, status, issued_at)
+                    VALUES (%s,%s,%s,NULLIF(%s,''),NULLIF(%s,''),%s,%s,%s,'issued',now()) RETURNING id""",
+                 (pid, holder_name.strip(), addr, holder_email.strip(), project.strip(), want["want_ai"], want["want_pnc"], want["want_wos"]))
+    number = _cert_number(pid, row["id"])
+    pdf = certificate_pdf(p, {"holder_name": holder_name.strip(), "holder_address": addr, "project": project.strip(), **want}, number)
+    db.run("UPDATE certificates SET number = %s, pdf_enc = %s WHERE id = %s", (number, encrypt(pdf), row["id"]))
+    audit(admin["id"], "cert_issued_by_broker", sid, {"policy": pid, "cert": row["id"], "sample": bool(p.get("sample"))}, request)
+    return RedirectResponse(back + "?msg=" + quote_plus(f"Certificate {number} issued to {holder_name.strip()}."), status_code=303)
+
+
+@router.get("/coi", response_class=HTMLResponse)
+def coi_form(request: Request, admin=Depends(require_admin)):
+    """Fill in an ACORD 25 by hand: any insured, insurer, policy and holder."""
+    return render(request, "coi.html", admin=admin, msg="")
+
+
+@router.post("/coi")
+async def coi_make(request: Request, admin=Depends(require_admin)):
+    from .certs import acord25_pdf, producer_block
+    f = await request.form()
+    require_csrf(admin, str(f.get("csrf", "")))
+    g = lambda k, n=200: str(f.get(k, "")).strip()[:n]
+    sample = f.get("sample") == "1"
+    def lines(*ks):
+        return [x for x in (g(k, 120) for k in ks) if x]
+    from datetime import datetime as _dt
+    def mdy(k):
+        try:
+            return _dt.strptime(g(k, 10), "%Y-%m-%d").strftime("%m/%d/%Y")
+        except ValueError:
+            return ""
+    number = g("number", 40) or f"BSW-M-{secrets.token_hex(3).upper()}"
+    d = {"sample": sample, "number": number, "date": _dt.now().strftime("%m/%d/%Y"), "producer": producer_block(sample),
+         "insured": {"name": g("insured_name", 120), "lines": lines("insured_line1", "insured_line2")},
+         "insurer": {"name": g("insurer", 80), "naic": g("naic", 10)},
+         "gl": {"form": "Claims-made" if g("policy_form") == "Claims-made" else "Occurrence", "number": g("policy_number", 40),
+                "eff": mdy("eff"), "exp": mdy("exp"), "limits": {k: g("lim_" + k, 30) for k in LIMIT_KEYS},
+                "ai": f.get("ai") == "1", "wos": f.get("wos") == "1"},
+         "remarks": g("remarks", 1200),
+         "holder": {"name": g("holder_name", 120), "lines": lines("holder_line1", "holder_line2")}}
+    if not (d["insured"]["name"] and d["insurer"]["name"] and d["holder"]["name"]):
+        return render(request, "coi.html", admin=admin, msg="Insured, insurer and certificate holder are required.")
+    pdf = acord25_pdf(d, sample=sample)
+    audit(admin["id"], "coi_manual", None, {"number": number, "sample": sample, "holder": d["holder"]["name"][:60]}, request)
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="ACORD25_{number}.pdf"'})
+
+
+def _profile_as_application(sub: dict):
+    """A short profile, shaped like a full application, so the ACORD 125/126 can be prefilled.
+    Anything the profile didn't ask stays blank for you to finish in the fillable copy."""
+    from types import SimpleNamespace
+    from .models import GLAnswers
+    a = dict(sub["answers"] or {})
+    vals = {}
+    for name, fld in GLAnswers.model_fields.items():
+        if not fld.is_required():
+            vals[name] = fld.get_default(call_default_factory=True)
+        else:
+            vals[name] = None
+    from datetime import date as _date
+    def d(v):
+        try:
+            return _date.fromisoformat(str(v)[:10])
+        except ValueError:
+            return None
+    vals.update({k: a[k] for k in ("legalName", "dba", "entity", "contactName", "phone", "email", "website", "street",
+                                   "city", "zip", "county", "premises", "sqft", "trade", "limits") if a.get(k) not in (None, "")})
+    vals.update({"started": d(a.get("started")), "effDate": d(a.get("effDate")) or sub["effective_date"],
+                 "revenue": float(a.get("revenue") or 0), "payroll": float(a.get("payroll") or 0),
+                 "opsDesc": a.get("opsDesc") or a.get("kindLabel") or "", "contactTitle": "Owner",
+                 "losses": str(a.get("claims") or "0"), "ft": 0, "pt": 0, "subCost": 0.0, "fein": ""})
+    return SimpleNamespace(**vals)
+
+
+@router.post("/submissions/{sid}/acords")
+def make_acords(request: Request, sid: int, csrf: str = Form(max_length=100), admin=Depends(require_admin)):
+    """Builds ACORD 125 and 126 for a submission (prefilled from a short profile, or rebuilt for a full
+    application), flat and fillable, and saves them with the submission's documents."""
+    from .acord_map import build_acord
+    from .models import GLAnswers
+    from .pdfs import fill_acord
+    require_csrf(admin, csrf)
+    sub = db.one("SELECT * FROM submissions WHERE id = %s", (sid,))
+    if not sub:
+        raise HTTPException(status_code=404)
+    s = get_settings()
+    try:
+        if sub["kind"] == "profile":
+            a = _profile_as_application(sub)
+        else:
+            a = GLAnswers.model_validate({**(sub["answers"] or {}), "fein": ""})
+        built = build_acord(a, "")
+    except Exception as e:
+        return RedirectResponse(f"{s.admin_path}/submissions/{sid}?msg=" + quote_plus(f"Couldn't build the ACORDs: {type(e).__name__}: {e}"[:250]), status_code=303)
+    docs = {"acord125": (f"Bindswift_{sid}_ACORD125.pdf", fill_acord(s.acord125_pdf, built["acord125"], built, "125")),
+            "acord126": (f"Bindswift_{sid}_ACORD126.pdf", fill_acord(s.acord126_pdf, built["acord126"], built, "126")),
+            "acord125_fillable": (f"Bindswift_{sid}_ACORD125_fillable.pdf", fill_acord(s.acord125_pdf, built["acord125"], built, "125", flatten=False)),
+            "acord126_fillable": (f"Bindswift_{sid}_ACORD126_fillable.pdf", fill_acord(s.acord126_pdf, built["acord126"], built, "126", flatten=False))}
+    with db.tx() as cur:
+        for kind, (fname, data) in docs.items():
+            cur.execute("DELETE FROM submission_documents WHERE submission_id = %s AND kind = %s", (sid, kind))
+            cur.execute("INSERT INTO submission_documents (submission_id, kind, filename, content_enc) VALUES (%s,%s,%s,%s)",
+                        (sid, kind, fname, encrypt(data)))
+    audit(admin["id"], "acords_generated", sid, {"from": sub["kind"]}, request)
+    return RedirectResponse(f"{s.admin_path}/submissions/{sid}?msg=" + quote_plus(
+        "ACORD 125 and 126 are ready under Documents." + (" Fields the short profile didn't ask are blank: finish them in the fillable copies." if sub["kind"] == "profile" else "")), status_code=303)

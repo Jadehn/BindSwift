@@ -358,6 +358,20 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .paper .coi>div{border-bottom:1px solid var(--ink);padding:8px 10px}.paper .coi>div:last-child{border-bottom:0}
 .paper .coi b{font-size:10px;letter-spacing:.08em;text-transform:uppercase;display:block;color:var(--muted)}
 @media (max-width:520px){.paper{padding:20px 18px 26px}.modal{padding:10px}}
+.pv.pv-coi .pv-tabs{visibility:hidden}
+.pv.pv-coi .pv-top .tag{visibility:hidden}
+.coi-form label{display:block;font-size:13px;font-weight:600;margin:10px 0 0;color:var(--ink)}
+.coi-form label input{display:block;width:100%;margin-top:5px;padding:11px 12px;border:1.5px solid var(--line,#DDD);border-radius:10px;font:inherit;font-weight:400;background:#fff;color:var(--ink);box-sizing:border-box}
+.coi-form label.chk{display:flex;gap:10px;align-items:flex-start;font-weight:500}
+.coi-form label.chk input{width:auto;margin-top:3px}
+.coi-form label.chk small{color:var(--muted);font-weight:400}
+.coi-row{display:grid;grid-template-columns:2fr .8fr 1.2fr;gap:10px}
+.coi-recent{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px}
+.coi-recent span{font-size:12px;color:var(--muted);margin-right:4px}
+.coi-recent .chip{border:1.5px solid var(--ink);background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.coi-err{color:#B42318;font-size:13.5px;min-height:18px;margin-top:8px}
+@media (max-width:520px){.coi-row{grid-template-columns:1fr 1fr}.coi-row label:first-child{grid-column:1/-1}}
+
 .phone-btn{position:fixed;right:16px;bottom:16px;z-index:40;box-shadow:var(--shadow)}
 .pv-phone{position:fixed;inset:0;background:rgba(10,10,10,.72);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:60;flex-direction:column;gap:12px;padding:12px}
 .pv-phone.on{display:flex}
@@ -1031,13 +1045,14 @@ function demoDash(){
     business:{legalName:biz,entity:S.a.entity||'Corporation',regState:S.a.regState||'NY',regStatus:S.a.dosId?'verified':'manual_check',regName:biz.toUpperCase(),regId:S.a.dosId||''},
     applications:[{ref:'demo',business:biz,status:'quoted',statusText:'Quote ready',submitted:'2026-11-12',effective:'2026-11-20'}],
     quotes:[{id:1,carrier:'Harborline Mutual',amount:1842,isTotal:false,limits:'$1M per occurrence / $2M aggregate',starts:'2026-11-20',expires:'2026-11-26',status:'Ready to review',link:'#demo-quote'}],
-    policies:[{id:1,carrier:'Brightwater Specialty',number:'BWS-GL-0042817',starts:'2025-11-20',ends:'2026-11-20',occurrence:'$1,000,000',aggregate:'$2,000,000',status:'active',certificatesOn:true,certificates:3,certLink:'#demo-cert'}],
+    policies:[{id:1,carrier:'Brightwater Specialty',number:'BWS-GL-0042817',starts:'2026-11-01',ends:'2027-11-01',occurrence:'$1,000,000',aggregate:'$2,000,000',status:'active',certificatesOn:true,certificates:3+COI.issued.length,certLink:'#demo-cert'}],
     documents:[{title:'Your application answers',group:'Application',date:'2026-11-12',url:'#demo-answers'},
       {title:'ACORD 125 (commercial application)',group:'Application',date:'2026-11-12',url:'#demo-125'},
       {title:'ACORD 126 (general liability section)',group:'Application',date:'2026-11-12',url:'#demo-126'},
       {title:'Bindswift service fee agreement',group:'Application',date:'2026-11-12',url:'#demo-fee'},
       {title:'Quote summary: Harborline Mutual',group:'Quotes',date:'2026-11-13',url:'#demo-quotesum'},
-      {title:'Certificate BSW-0001-00003: Fulton Street Realty LLC',group:'Certificates',date:'2026-11-02',url:'#demo-coi'}]};
+      {title:'Certificate BSW-0001-00003: Fulton Street Realty LLC',group:'Certificates',date:'2026-11-02',url:'#demo-coi'},
+      ...COI.issued.map((c,i)=>({title:`Sample certificate ${c.number}: ${c.holder}`,group:'Certificates',date:c.date,url:'#demo-issued-'+i}))]};
 }
 async function renderDash(){
   const el=$('#dash');
@@ -1093,10 +1108,83 @@ $('#dash').addEventListener('click',e=>{
   e.preventDefault();
   const da=Object.keys(S.a).length>3?S.a:SAMPLE;
   if(u==='#demo-125'||u==='#demo-126'){openPreview(buildAcord(da));return}
+  if(u==='#demo-cert'){openCoiForm(da);return}
+  if(u.startsWith('#demo-issued-')){const c=COI.issued[+u.slice(13)];if(c&&c.pdf)showCoiPdf(c);return}
   if(DOCS[u]){openDoc(DOCS[u](da));return}
   toast({'#demo-quote':'On the live site this opens the insurer\'s quote with a bind button.','#demo-cert':'On the live site this opens your certificate page: holder, address, send.'}[u]||'On the live site this downloads the PDF.');
 });
 
+
+/* ---------- demo: send a certificate from the sample policy ---------- */
+const COI={issued:[],holders:[{name:'Fulton Street Realty LLC',street:'200 Example St',city:'Brooklyn',state:'NY',zip:'11201'}]};
+function openCoiForm(a){
+  const h=COI.holders[0];
+  $('#modalBody').className='card doccard';
+  $('#modalBody').innerHTML=`<div class="doc-top"><b>Send a certificate</b><button class="btn btn-line btn-sm" type="button" id="closeModal">Close</button></div>
+   <form class="paper coi-form" id="coiForm" novalidate>
+    <div class="meta">SAMPLE POLICY · BRIGHTWATER SPECIALTY · BWS-GL-0042817 · DEMO</div>
+    <p style="color:var(--muted);margin:6px 0 14px">Who needs proof of your insurance? A landlord, a client or a GC. You get an ACORD 25 certificate in seconds. On the demo it's stamped <b>SAMPLE ONLY</b>.</p>
+    ${COI.holders.length?`<div class="coi-recent"><span>Recent holders</span>${COI.holders.map((x,i)=>`<button type="button" class="chip" data-h="${i}">${esc(x.name)}</button>`).join('')}</div>`:''}
+    <label>Certificate holder<input name="holderName" required maxlength="120" value="${esc(h.name)}"></label>
+    <label>Street address<input name="street" required maxlength="120" value="${esc(h.street)}"></label>
+    <div class="coi-row"><label>City<input name="city" required maxlength="60" value="${esc(h.city)}"></label>
+      <label>State<input name="state" maxlength="2" value="${esc(h.state)}"></label>
+      <label>ZIP<input name="zip" required maxlength="10" inputmode="numeric" value="${esc(h.zip)}"></label></div>
+    <label>Project or job (optional)<input name="project" maxlength="200" placeholder="Lease of Suite 2B"></label>
+    <label class="chk"><input type="checkbox" name="ai" value="1" checked> Add them as additional insured <small>(your policy has a blanket endorsement)</small></label>
+    <label class="chk"><input type="checkbox" name="wos" value="1"> Waiver of subrogation</label>
+    <div class="coi-err" id="coiErr"></div>
+    <button class="btn btn-black btn-lg" type="submit" id="coiGo" style="width:100%;margin-top:6px">Create certificate</button>
+   </form>`;
+  $('#modal').classList.add('on'); $('#closeModal').addEventListener('click',closeDoc);
+  const f=$('#coiForm');
+  f.querySelectorAll('[data-h]').forEach(b=>b.addEventListener('click',()=>{const x=COI.holders[+b.dataset.h];
+    ['name','street','city','state','zip'].forEach(k=>{f.elements[k==='name'?'holderName':k].value=x[k]})}));
+  f.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const v=Object.fromEntries(new FormData(f).entries());
+    if(!v.holderName.trim()||!v.street.trim()||!v.city.trim()||!v.zip.trim()){$('#coiErr').textContent='Enter the holder\'s name and full address.';return}
+    $('#coiErr').textContent=''; const btn=$('#coiGo'); btn.disabled=true; btn.textContent='Creating certificate…';
+    const body={...v,ai:!!v.ai,wos:!!v.wos,insuredName:a.legalName||'Doe Home Services Inc.',insuredStreet:a.street||'',
+      insuredCityLine:a.city?`${a.city}, NY ${a.zip||''}`.trim():'',ops:a.opsDesc||a.kindLabel||''};
+    try{
+      const r=await fetch('/api/demo/certificate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const ct=r.headers.get('content-type')||'';
+      if(r.ok&&ct.includes('pdf')){
+        const buf=await r.arrayBuffer();
+        const num=(/Sample_COI_([^".]+)/.exec(r.headers.get('content-disposition')||'')||[])[1]||'SAMPLE';
+        const c={number:num,holder:v.holderName.trim(),date:new Date().toISOString().slice(0,10),pdf:new Uint8Array(buf)};
+        COI.issued.unshift(c);
+        const key=v.holderName.trim().toLowerCase();
+        COI.holders=[{name:v.holderName.trim(),street:v.street.trim(),city:v.city.trim(),state:(v.state||'NY').toUpperCase(),zip:v.zip.trim()},
+          ...COI.holders.filter(x=>x.name.toLowerCase()!==key)].slice(0,5);
+        closeDoc(); showCoiPdf(c); if(location.hash==='#dashboard') renderDash(); return;
+      }
+      if(ct.includes('json')){const j=await r.json();throw new Error(j.error||'failed')}
+      throw new Error('offline');
+    }catch(err){
+      if(String(err.message)!=='offline'){$('#coiErr').textContent=err.message;btn.disabled=false;btn.textContent='Create certificate';return}
+      closeDoc(); openDoc(DOCS['#demo-coi']({...a,_holder:body}));   // no server (opened as a file): HTML preview
+    }
+  });
+}
+async function showCoiPdf(c){
+  const body=$('#pvBody'); PV.tok=(PV.tok||0)+1; const token=PV.tok;
+  $('#pv').classList.add('on','pv-coi'); document.body.style.overflow='hidden';
+  const url=URL.createObjectURL(new Blob([c.pdf],{type:'application/pdf'}));
+  body.innerHTML=`<div class="pv-label">CERTIFICATE ${esc(c.number)} · ${esc(c.holder)} · SAMPLE</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin:0 0 12px"><a class="btn btn-white btn-sm" href="${url}" download="Sample_COI_${esc(c.number)}.pdf">Download PDF ↓</a></div>`;
+  try{
+    if(!window.pdfjsLib) throw new Error('viewer');
+    const pdf=await pdfjsLib.getDocument({data:c.pdf.slice(),isEvalSupported:false}).promise;
+    if(token!==PV.tok) return;
+    const page=await pdf.getPage(1), width=Math.min(860, body.clientWidth-24), dpr=Math.min(window.devicePixelRatio||1,2);
+    const vp=page.getViewport({scale:(width/page.getViewport({scale:1}).width)*dpr});
+    const wrap=document.createElement('div'); wrap.className='pv-page'; const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
+    wrap.appendChild(cv); body.appendChild(wrap);
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+  }catch(e){body.insertAdjacentHTML('beforeend','<div class="pv-msg">Preview unavailable here. Download the PDF to view it.</div>')}
+}
 /* ---------- document previews (demo) ---------- */
 function openDoc(d){
   $('#modalBody').className='card doccard';
@@ -1139,10 +1227,10 @@ const DOCS={
     <p style="font-size:12px;color:var(--muted)">Issued as a matter of information only. It confers no rights on the certificate holder and doesn't change the policy.</p>
     <div class="coi"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><b>Producer</b>Bindswift<br>99 Wall Street, New York, NY 10005</div><div><b>Insured</b>${esc(a.legalName)}<br>${esc(a.street||'')}, ${esc(a.city||'')}, NY ${esc(a.zip||'')}</div></div>
       <div><b>Insurer</b>Brightwater Specialty</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><b>Policy</b>BWS-GL-0042817</div><div><b>Effective</b>11/20/2025</div><div><b>Expires</b>11/20/2026</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><b>Policy</b>BWS-GL-0042817</div><div><b>Effective</b>11/01/2026</div><div><b>Expires</b>11/01/2027</div></div>
       <div><b>Commercial general liability · Occurrence</b>Each occurrence $1,000,000 · General aggregate $2,000,000 · Products/completed ops $2,000,000</div>
       <div><b>Description of operations</b>${esc(a.opsDesc||'')} The certificate holder is additional insured where required by written contract, per the policy's blanket endorsement.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><b>Certificate holder</b>Fulton Street Realty LLC<br>200 Example St, Brooklyn, NY 11201</div><div><b>Authorized representative</b><span style="font-family:'Great Vibes',cursive;font-size:28px">Bindswift</span></div></div></div>`})
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><b>Certificate holder</b>${a._holder?esc(a._holder.holderName)+'<br>'+esc(a._holder.street)+', '+esc(a._holder.city)+', '+esc((a._holder.state||'NY').toUpperCase())+' '+esc(a._holder.zip):'Fulton Street Realty LLC<br>200 Example St, Brooklyn, NY 11201'}</div><div><b>Authorized representative</b><span style="font-family:'Great Vibes',cursive;font-size:28px">Bindswift</span></div></div></div>`})
 };
 
 /* ---------- phone preview ---------- */
@@ -1768,7 +1856,7 @@ function openPreview(built){
   $('#pv').classList.add('on'); document.body.style.overflow='hidden';
   renderPreview();
 }
-function closePreview(){ $('#pv').classList.remove('on'); document.body.style.overflow=''; }
+function closePreview(){ $('#pv').classList.remove('on','pv-coi'); document.body.style.overflow=''; }
 $('#pvClose').addEventListener('click',closePreview);
 document.querySelectorAll('.pv-tabs button').forEach(b=>b.addEventListener('click',()=>{
   PV.form=b.dataset.form; document.querySelectorAll('.pv-tabs button').forEach(x=>x.classList.toggle('on',x===b)); renderPreview();

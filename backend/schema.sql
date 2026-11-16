@@ -265,3 +265,6 @@ CREATE TABLE IF NOT EXISTS app_settings (
     updated_by  INT REFERENCES admins(id),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- 2026-11-16: practice policies (certificates from them are stamped SAMPLE ONLY)
+ALTER TABLE policies ADD COLUMN IF NOT EXISTS sample BOOLEAN NOT NULL DEFAULT FALSE;

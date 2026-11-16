@@ -91,7 +91,7 @@ details summary{cursor:pointer;font-weight:600}
 <header><div class="in">
   <a class="brand" href="{{ base }}/submissions"><svg aria-hidden="true" width="28" height="28" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M3 23.5h8.5M1 32h9M3 40.5h8.5" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round"/><path d="M36.00 6.80 L40.04 3.89 L43.10 7.82 L47.80 6.17 L49.62 10.80 L54.60 10.54 L55.04 15.50 L59.89 16.65 L58.92 21.53 L63.25 24.00 L60.94 28.41 L64.40 32.00 L60.94 35.59 L63.25 40.00 L58.92 42.47 L59.89 47.35 L55.04 48.50 L54.60 53.46 L49.62 53.20 L47.80 57.83 L43.10 56.18 L40.04 60.11 L36.00 57.20 A25.2 25.2 0 0 1 36.00 6.80Z" fill="#FFFFFF"/><circle cx="36" cy="32" r="19" fill="none" stroke="#0A0A0A" stroke-width="1.5" opacity=".5"/><path d="M22.6 32.4 30.4 40.2 40.4 26.6h-4.9l10.7-8.1-5.6 10.9h4.7L30.4 45.2 20.2 35z" fill="#0A0A0A"/></svg>Bindswift<small>Admin</small></a>
   {% if admin %}
-  <nav class="top"><a href="{{ base }}/submissions" class="on">Submissions</a></nav>
+  <nav class="top"><a href="{{ base }}/submissions" class="{{ 'on' if '/coi' not in request.url.path }}">Submissions</a><a href="{{ base }}/coi" class="{{ 'on' if '/coi' in request.url.path }}">Certificate (ACORD 25)</a></nav>
   <div><span class="who">{{ admin.email }}</span>
   <form method="post" action="{{ base }}/logout"><input type="hidden" name="csrf" value="{{ admin.csrf_token }}"><button class="btn btn-light btn-sm">Log out</button></form></div>
   {% endif %}

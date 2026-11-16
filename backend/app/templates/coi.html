@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+{% if msg %}<div class="card" style="padding:12px 16px;border-left:4px solid #0A0A0A"><b>{{ msg }}</b></div>{% endif %}
+<div class="page-head"><div><span class="eyebrow">ACORD 25</span><h1>Certificate of liability insurance</h1></div></div>
+<p class="muted">Fill in any certificate by hand and download it as a flattened ACORD 25. Your producer box comes from AGENCY_NAME, AGENCY_ADDRESS and PRODUCER_* in .env. For policies already in Bindswift, issue from the policy page instead so the certificate is saved.</p>
+<form method="post" class="card">
+  <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+  <div class="grid">
+    <div>
+      <h3 style="margin-top:0">Insured</h3>
+      <label>Named insured</label><input name="insured_name" required maxlength="120">
+      <label>Street</label><input name="insured_line1" maxlength="120">
+      <label>City, state ZIP</label><input name="insured_line2" maxlength="120" placeholder="Brooklyn, NY 11217">
+      <h3>Insurer and policy</h3>
+      <div class="grid"><div><label>Insurer A</label><input name="insurer" required maxlength="80"></div><div><label>NAIC #</label><input name="naic" maxlength="10"></div></div>
+      <label>Policy number</label><input name="policy_number" maxlength="40">
+      <div class="grid"><div><label>Effective</label><input type="date" name="eff"></div><div><label>Expires</label><input type="date" name="exp"></div></div>
+      <label>Form</label><select name="policy_form"><option>Occurrence</option><option>Claims-made</option></select>
+    </div>
+    <div>
+      <h3 style="margin-top:0">General liability limits</h3>
+      <div class="grid">
+        <div><label>Each occurrence</label><input name="lim_each_occurrence" value="1,000,000"></div>
+        <div><label>Damage to rented premises</label><input name="lim_damage_rented" value="100,000"></div>
+        <div><label>Medical expense</label><input name="lim_medical" value="5,000"></div>
+        <div><label>Personal &amp; adv injury</label><input name="lim_personal_advertising" value="1,000,000"></div>
+        <div><label>General aggregate</label><input name="lim_general_aggregate" value="2,000,000"></div>
+        <div><label>Products-comp/op agg</label><input name="lim_products_aggregate" value="2,000,000"></div>
+      </div>
+      <label class="chk"><input type="checkbox" name="ai" value="1"> Additional insured (ADDL INSD = Y)</label>
+      <label class="chk"><input type="checkbox" name="wos" value="1"> Waiver of subrogation (SUBR WVD = Y)</label>
+      <h3>Certificate holder</h3>
+      <label>Name</label><input name="holder_name" required maxlength="120">
+      <label>Street</label><input name="holder_line1" maxlength="120">
+      <label>City, state ZIP</label><input name="holder_line2" maxlength="120">
+    </div>
+  </div>
+  <label>Description of operations / remarks</label><textarea name="remarks" rows="3" maxlength="1200"></textarea>
+  <div class="grid"><div><label>Certificate number (optional)</label><input name="number" maxlength="40"></div>
+    <div><label class="chk" style="margin-top:28px"><input type="checkbox" name="sample" value="1"> Sample: demo producer box and a SAMPLE ONLY stamp</label></div></div>
+  <button class="btn btn-dark" style="margin-top:12px">Download ACORD 25</button>
+</form>
+{% endblock %}

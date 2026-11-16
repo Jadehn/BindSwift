@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% if msg %}<div class="card" style="padding:12px 16px;border-left:4px solid #0A0A0A"><b>{{ msg }}</b></div>{% endif %}
 <p><a href="{{ base }}/submissions">← All submissions</a></p>
 <span class="eyebrow">{{ 'Short business profile' if s.kind == 'profile' else 'Full application' }} · #{{ s.id }}</span>
 <h1>{{ s.legal_name }} <span class="pill {{ s.status }}" style="vertical-align:middle">{{ s.status.replace('_',' ') }}</span></h1>
@@ -57,6 +58,9 @@
   </div>
   <div class="card">
     <h2 style="margin-top:0">Documents</h2>
+    <form method="post" action="{{ base }}/submissions/{{ s.id }}/acords" style="margin-bottom:10px">
+      <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+      <button class="btn btn-dark btn-sm">{{ 'Generate ACORD 125 + 126 from this profile' if s.kind == 'profile' else 'Rebuild ACORD 125 + 126' }}</button></form>
     {% for d in docs %}
       <p><a class="btn btn-light" href="{{ base }}/submissions/{{ s.id }}/docs/{{ d.kind }}">{{ d.filename }}</a></p>
     {% endfor %}
@@ -145,6 +149,9 @@
         <select name="billing" style="width:auto"><option value="direct">Direct bill</option><option value="agency">Agency bill</option></select>
         <button class="btn btn-light btn-sm">Mark bound (done in carrier portal)</button></form>
       {% endif %}
+      <form method="post" action="{{ base }}/submissions/{{ s.id }}/quotes/{{ q.id }}/sample-policy" title="A practice policy for testing certificates. Nothing is bound; certificates are stamped SAMPLE ONLY.">
+        <input type="hidden" name="csrf" value="{{ admin.csrf_token }}">
+        <button class="btn btn-light btn-sm">Sample policy → certificates</button></form>
     </div>
     {% endif %}
     {% endif %}
