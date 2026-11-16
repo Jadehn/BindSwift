@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import db
 from .acord_map import TRADES
-from .integrations import coterie, next_ins
+from .integrations import coterie, hiscox, next_ins
 from .config import get_settings
 from .security import encrypt
 from .security import (check_password, check_totp, clear_session_cookie, client_ip, create_session,
@@ -22,7 +22,8 @@ router = APIRouter(include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))  # autoescape on by default
 templates.env.globals["TRADES"] = TRADES
 LOGIN_CSRF = "cc_login_csrf"
-STATUSES = ["pending_review", "approved", "quoted", "bind_requested", "bound", "sent_to_market", "rejected"]
+STATUSES = ["pending_review", "needs_application", "quoting", "approved", "quoted", "bind_requested", "bound",
+            "sent_to_market", "rejected", "superseded"]
 
 
 def ip_allowed(request: Request):
@@ -112,19 +113,45 @@ def home(_=Depends(require_admin)):
 
 
 @router.get("/submissions", response_class=HTMLResponse)
-def list_submissions(request: Request, status: str = "pending_review", admin=Depends(require_admin)):
+def list_submissions(request: Request, status: str = "all", admin=Depends(require_admin)):
     if status not in STATUSES + ["all"]:
-        status = "pending_review"
+        status = "all"
     rows = db.all_(
-        """SELECT id, legal_name, trade, class_code, county, annual_payroll, losses_5yr, limits,
-                  effective_date, status, email_sent_at, email_error, created_at
-             FROM submissions
-            WHERE (%(st)s = 'all' OR status = %(st)s)
-            ORDER BY created_at DESC LIMIT 200""",
+        """SELECT s.id, s.legal_name, s.trade, s.class_code, s.county, s.annual_payroll, s.annual_revenue, s.losses_5yr,
+                  s.limits, s.effective_date, s.status, s.email_sent_at, s.email_error, s.created_at, s.kind,
+                  s.answers->>'kindLabel' AS kind_label, s.match->>'route' AS route,
+                  q.ok AS q_ok, q.premium AS q_premium, q.carrier AS q_carrier
+             FROM submissions s
+             LEFT JOIN LATERAL (SELECT ok, premium, carrier FROM carrier_quotes c WHERE c.submission_id = s.id
+                                 ORDER BY c.ok DESC, c.created_at DESC LIMIT 1) q ON TRUE
+            WHERE (%(st)s = 'all' OR s.status = %(st)s)
+            ORDER BY s.created_at DESC LIMIT 200""",
         {"st": status},
     )
     counts = {r["status"]: r["n"] for r in db.all_("SELECT status, count(*) AS n FROM submissions GROUP BY status")}
-    return render(request, "list.html", admin=admin, rows=rows, status=status, statuses=STATUSES, counts=counts)
+    kpi = db.one("""SELECT count(*) FILTER (WHERE s.match->>'route' = 'instant') AS instant_all,
+                           count(*) FILTER (WHERE s.match->>'route' = 'instant' AND EXISTS (
+                               SELECT 1 FROM carrier_quotes c WHERE c.submission_id = s.id AND c.ok)) AS instant_ok,
+                           coalesce((SELECT sum(premium) FROM carrier_quotes c JOIN submissions x ON x.id = c.submission_id
+                                      WHERE c.ok AND c.bound_at IS NULL AND x.status IN ('quoted','bind_requested')), 0) AS premium
+                      FROM submissions s WHERE s.kind = 'profile'""")
+    from .appetite import hiscox_connected, instant_enabled
+    return render(request, "list.html", admin=admin, rows=rows, status=status, statuses=STATUSES, counts=counts, kpi=kpi,
+                  instant_on=instant_enabled(), hiscox_on=hiscox_connected())
+
+
+@router.post("/settings/instant-quotes")
+def toggle_instant(request: Request, on: str = Form("0", max_length=1), csrf: str = Form(max_length=100),
+                   admin=Depends(require_admin)):
+    """Live instant quotes on/off: when off, client profiles are saved and routed to you, and no
+    carrier quote runs."""
+    require_csrf(admin, csrf)
+    value = on == "1"
+    db.run("""INSERT INTO app_settings (key, value, updated_by, updated_at) VALUES ('instant_quotes', %s::jsonb, %s, now())
+              ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()""",
+           (json.dumps(value), admin["id"]))
+    audit(admin["id"], "setting_changed", None, {"instant_quotes": value}, request)
+    return RedirectResponse(f"{get_settings().admin_path}/submissions", status_code=303)
 
 
 @router.get("/submissions/{sid}", response_class=HTMLResponse)
@@ -142,6 +169,8 @@ def view_submission(request: Request, sid: int, admin=Depends(require_admin)):
     carriers = {"coterie": {"name": "Coterie", "issues": coterie.eligibility(sub["answers"]),
                             "connected": bool(get_settings().coterie_publishable_key),
                             "env": get_settings().coterie_env},
+                "hiscox": {"name": "Hiscox", "issues": hiscox.eligibility(sub["answers"]),
+                           "connected": bool(get_settings().hiscox_email and get_settings().hiscox_password)},
                 "next": {"name": "NEXT", "issues": next_ins.eligibility(sub["answers"]),
                          "sheet": next_ins.answer_sheet(sub["answers"])}}
     audit(admin["id"], "view_submission", sid, request=request)
@@ -172,6 +201,26 @@ def coterie_quote(request: Request, sid: int, csrf: str = Form(max_length=100), 
            (sid, res.get("env"), res["ok"], premium, res.get("quote_id"), res.get("application_url"),
             res.get("error"), json.dumps(res.get("raw") or {}, default=str), admin["id"]))
     audit(admin["id"], "carrier_quote", sid, {"carrier": "coterie", "ok": res["ok"]}, request)
+    return RedirectResponse(f"{get_settings().admin_path}/submissions/{sid}#carriers", status_code=303)
+
+
+@router.post("/submissions/{sid}/carriers/hiscox/quote")
+def hiscox_quote(request: Request, sid: int, csrf: str = Form(max_length=100), admin=Depends(require_admin)):
+    """Runs a Hiscox GL quote in the agent portal up to the price. Never binds."""
+    require_csrf(admin, csrf)
+    sub = db.one("SELECT status, answers FROM submissions WHERE id = %s", (sid,))
+    if not sub:
+        raise HTTPException(status_code=404)
+    if sub["status"] not in ("approved", "sent_to_market", "quoted"):
+        raise HTTPException(status_code=409, detail="Approve the submission before sending it to a carrier.")
+    res = hiscox.create_quote(sub["answers"])
+    raw = {k: res.get(k) for k in ("monthly", "amounts", "messages", "trail") if res.get(k) is not None}
+    db.run("""INSERT INTO carrier_quotes (submission_id, carrier, environment, ok, premium, quote_id,
+                                          application_url, error, raw, requested_by)
+              VALUES (%s,'hiscox',%s,%s,%s,%s,%s,%s,%s::jsonb,%s)""",
+           (sid, res.get("env") or "live", res["ok"], res.get("premium"), res.get("quote_id"), None,
+            res.get("error"), json.dumps(raw, default=str), admin["id"]))
+    audit(admin["id"], "carrier_quote", sid, {"carrier": "hiscox", "ok": res["ok"]}, request)
     return RedirectResponse(f"{get_settings().admin_path}/submissions/{sid}#carriers", status_code=303)
 
 

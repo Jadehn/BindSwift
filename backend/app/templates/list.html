@@ -1,30 +1,50 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Submissions</h1>
-<div class="tabs">
-  {% for st in statuses %}<a href="?status={{ st }}" class="{{ 'on' if st == status }}">{{ st.replace('_',' ') }} ({{ counts.get(st, 0) }})</a>{% endfor %}
-  <a href="?status=all" class="{{ 'on' if status == 'all' }}">all</a>
+<div class="page-head">
+  <div><span class="eyebrow">General liability · New York</span><h1>Submissions</h1></div>
+  <form method="post" action="{{ base }}/settings/instant-quotes" class="switch-card {{ 'is-on' if instant_on }}">
+    <input type="hidden" name="csrf" value="{{ admin.csrf_token }}"><input type="hidden" name="on" value="{{ '0' if instant_on else '1' }}">
+    <div><span class="eyebrow">Live instant quotes</span>
+      <b>{{ 'On: clients get real Hiscox quotes' if instant_on else 'Off: profiles come to you, no carrier quote runs' }}</b>
+      {% if not hiscox_on %}<span class="err" style="font-size:12px">Add HISCOX_EMAIL and HISCOX_PASSWORD to turn this on.</span>{% endif %}</div>
+    <button class="switch" type="submit" aria-pressed="{{ 'true' if instant_on else 'false' }}" {% if not hiscox_on and not instant_on %}disabled{% endif %}
+            title="{{ 'Turn off' if instant_on else 'Turn on' }}"><i></i></button>
+  </form>
 </div>
+<div class="kpis">
+  <div class="kpi dark"><span class="tag">Needs you</span><div class="n">{{ counts.get('pending_review', 0) + counts.get('needs_application', 0) + counts.get('bind_requested', 0) }}</div><span class="muted" style="font-size:12.5px;color:#A1A1A6">to review, place or bind</span></div>
+  <div class="kpi"><span class="tag">Instant quotes</span><div class="n">{{ kpi.instant_ok }}<span class="muted" style="font-size:16px;font-weight:500"> / {{ kpi.instant_all }}</span></div><span class="muted" style="font-size:12.5px">priced online by Hiscox</span></div>
+  <div class="kpi"><span class="tag">Quoted premium</span><div class="n money">${{ "{:,.0f}".format(kpi.premium) }}</div><span class="muted" style="font-size:12.5px">open quotes</span></div>
+  <div class="kpi"><span class="tag">Bound</span><div class="n">{{ counts.get('bound', 0) }}</div><span class="muted" style="font-size:12.5px">policies</span></div>
+</div>
+<div class="tabs">
+  <a href="?status=all" class="{{ 'on' if status == 'all' }}">All <b>{{ counts.values() | sum }}</b></a>
+  {% for st in statuses %}<a href="?status={{ st }}" class="{{ 'on' if st == status }}">{{ st.replace('_',' ') | capitalize }} <b>{{ counts.get(st, 0) }}</b></a>{% endfor %}
+</div>
+<div class="table-wrap">
 <table>
-  <thead><tr><th>#</th><th>Business</th><th>Trade / class</th><th>County</th><th>Payroll</th><th>Claims</th><th>Limits</th><th>Effective</th><th>Status</th><th>Email</th><th>Received</th></tr></thead>
+  <thead><tr><th>#</th><th>Business</th><th>Source</th><th>County</th><th>Revenue</th><th>Limits</th><th>Effective</th><th>Quote</th><th>Status</th><th>Received</th></tr></thead>
   <tbody>
   {% for r in rows %}
     <tr>
-      <td><a href="{{ base }}/submissions/{{ r.id }}">{{ r.id }}</a></td>
-      <td><a href="{{ base }}/submissions/{{ r.id }}">{{ r.legal_name }}</a></td>
-      <td>{{ TRADES[r.trade].l }}<br><span class="muted">{{ r.class_code }}</span></td>
+      <td class="muted">{{ r.id }}</td>
+      <td class="biz"><b><a href="{{ base }}/submissions/{{ r.id }}">{{ r.legal_name }}</a></b>
+        <span>{{ TRADES[r.trade].l if r.trade in TRADES else r.trade }}{% if r.kind_label %} · {{ r.kind_label }}{% endif %}{% if r.class_code %} · {{ r.class_code }}{% endif %}</span></td>
+      <td>{% if r.kind == 'profile' %}<span class="badge {{ 'instant' if r.route == 'instant' }}">Profile{{ ' · instant' if r.route == 'instant' }}</span>{% else %}<span class="badge">Full app</span>{% endif %}</td>
       <td>{{ r.county }}</td>
-      <td>${{ "{:,.0f}".format(r.annual_payroll) }}</td>
-      <td>{{ r.losses_5yr }}</td>
+      <td class="money">${{ "{:,.0f}".format(r.annual_revenue) }}</td>
       <td>{{ r.limits }}M</td>
       <td>{{ r.effective_date.strftime('%m/%d/%Y') }}</td>
-      <td><span class="pill {{ r.status }}">{{ r.status.replace('_',' ') }}</span></td>
-      <td>{% if r.email_sent_at %}sent{% elif r.email_error %}<span class="err" title="{{ r.email_error }}">failed</span>{% else %}<span class="muted">queued</span>{% endif %}</td>
-      <td class="muted">{{ r.created_at.strftime('%m/%d %I:%M %p') }} UTC</td>
+      <td>{% if r.q_ok %}<span class="money">${{ "{:,.0f}".format(r.q_premium) }}</span><br><span class="muted" style="font-size:12px">{{ r.q_carrier | title }}</span>
+          {% elif r.q_carrier %}<span class="err" style="font-size:12.5px">{{ r.q_carrier | title }}: no quote</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td><span class="pill {{ r.status }}">{{ r.status.replace('_',' ') }}</span>
+        {% if r.email_error %}<br><span class="err" style="font-size:12px" title="{{ r.email_error }}">email failed</span>{% endif %}</td>
+      <td class="muted" style="font-size:12.5px">{{ r.created_at.strftime('%m/%d %I:%M %p') }} UTC</td>
     </tr>
   {% else %}
-    <tr><td colspan="11" class="muted">Nothing here.</td></tr>
+    <tr><td colspan="10" class="muted" style="padding:28px;text-align:center">Nothing here.</td></tr>
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

@@ -28,7 +28,59 @@ TRADES = {
     "handyman":   dict(l="Handyman Services",           code="91342", naics="236118"),
     "remodel":    dict(l="Residential Remodeling",      code="91583", naics="236118"),
     "roofing":    dict(l="Roofing Contractor",          code="98677", naics="238160"),
+    # First appetite tier: main-street classes quoted in minutes. GL class codes are left for the
+    # broker to assign per carrier (they differ by carrier); NAICS only where the match is exact.
+    "salon":       dict(l="Hair Salon",                        code="", naics="812112", group="beauty"),
+    "barber":      dict(l="Barbershop",                        code="", naics="812111", group="beauty"),
+    "beauty":      dict(l="Nail, Lash & Braiding Services",    code="", naics="812113", group="beauty"),
+    "consultant":  dict(l="Business Consultant",               code="", naics="541611", group="office"),
+    "marketing":   dict(l="Marketing Agency",                  code="", naics="541613", group="office"),
+    "bookkeeping": dict(l="Bookkeeping & Tax Preparation",     code="", naics="541219", group="office"),
+    "doula":       dict(l="Doula Services",                    code="", naics="",       group="wellness"),
+    "wellness":    dict(l="Wellness Coaching",                 code="", naics="",       group="wellness"),
+    "retail":      dict(l="Retail Store",                      code="", naics="",       group="retail"),
 }
+for _t in TRADES.values():
+    _t.setdefault("group", "trade")
+NATURE = {"trade": "Contractor", "beauty": "Service", "office": "Office", "wellness": "Service", "retail": "Retail"}
+SERVICES = {"cut": "haircuts & styling", "color": "color & chemical treatments", "nails": "nails",
+            "lash": "lashes & brows", "braid": "braiding & locs", "wax": "waxing & threading"}
+PLACES = {"homes": "clients' homes", "hospital": "hospitals & birth centers", "studio": "own office or studio",
+          "online": "online / by phone only"}
+yesno = lambda v: "Yes" if v == "Y" else "No"
+
+
+def class_details_dict(a: dict) -> list[str]:
+    """Same as class_details, for answers stored as a plain dict (admin pages, carrier sheets)."""
+    from types import SimpleNamespace
+    keys = ("trade", "stations", "services", "boothRental", "licensed", "clientVisits", "wantEO",
+            "workPlaces", "certified", "sqft", "sellOnline", "ownBrand")
+    d = {k: a.get(k) for k in keys}
+    for k in ("services", "workPlaces"):
+        d[k] = d[k] or []
+    return class_details(SimpleNamespace(**d)) if a.get("trade") in TRADES else []
+
+
+def class_details(a) -> list[str]:
+    """Plain-language facts about a main-street business, printed in the ACORD description."""
+    g = TRADES[a.trade]["group"]
+    out = []
+    if g == "beauty":
+        out.append(f"Stations/chairs: {a.stations or 'n/a'}. Services: "
+                   + (", ".join(SERVICES[x] for x in a.services) or "n/a") + ".")
+        out.append(f"Chairs/booths rented to independent operators: {yesno(a.boothRental)}. "
+                   f"All service providers NYS licensed: {yesno(a.licensed)}.")
+    elif g == "office":
+        out.append(f"Clients visit the office: {yesno(a.clientVisits)}. "
+                   f"Professional liability (E&O) also requested: {yesno(a.wantEO)}.")
+    elif g == "wellness":
+        out.append("Services provided at: " + (", ".join(PLACES[x] for x in a.workPlaces) or "n/a") + ". "
+                   f"Certified/credentialed: {yesno(a.certified)}. "
+                   f"Professional liability also requested: {yesno(a.wantEO)}.")
+    elif g == "retail":
+        out.append(f"Store size: {a.sqft or 'n/a'} sq ft. Sells online: {yesno(a.sellOnline)}. "
+                   f"Imports or sells under its own label: {yesno(a.ownBrand)}.")
+    return out
 INTEREST_LABELS = {"AdditionalInsured": "Additional Insured", "EmployeeAsLessor": "Employee as Lessor",
                    "LendersLossPayable": "Lender's Loss Payable", "Lienholder": "Lienholder",
                    "LossPayee": "Loss Payee", "Mortgagee": "Mortgagee"}
@@ -93,7 +145,9 @@ def build_acord(a: GLAnswers, fein: str) -> dict:
     name = a.legalName.upper() + (f" DBA {a.dba.upper()}" if a.dba else "")
     has_subs = a.subCost > 0
 
-    desc = [t["l"], f"Operations: {a.opsDesc}"]
+    grp = t["group"]
+    trade = grp == "trade"
+    desc = [t["l"], f"Operations: {a.opsDesc}"] + class_details(a)
     if a.premises == "Home":
         desc.append("Provided location is the home office.")
 
@@ -125,15 +179,18 @@ def build_acord(a: GLAnswers, fein: str) -> dict:
         "ACORD_Location1_Employees_FullTime": str(a.ft),
         "ACORD_Location1_AnnualRevenue": c(a.revenue),
         # nature of business
-        "ACORD_NatureOfBusiness_Contractor": "On",
+        f"ACORD_NatureOfBusiness_{NATURE[grp]}": "On",
         "ACORD_NatureOfBusiness_Description": "\n".join(desc),
-        "ACORD_NatureOfBusiness_InstallationPercentage": str(100 - a.offsitePct),
-        "ACORD_NatureOfBusiness_OffPremisesInstallation": str(a.offsitePct),
         # signature block
         "ACORD_Signatures_Producer_Name": s.producer_name,
         "ACORD_Signatures_Producer_NationalNumber": s.producer_npn,
         "ACORD_Signatures_Applicant_Date": today,
     }
+    if trade:
+        f125["ACORD_NatureOfBusiness_InstallationPercentage"] = str(100 - a.offsitePct)
+        f125["ACORD_NatureOfBusiness_OffPremisesInstallation"] = str(a.offsitePct)
+    if a.sqft:
+        f125["ACORD_Location1_OccupiedArea"] = a.sqft
     if a.pt:
         f125["ACORD_Location1_Employees_PartTime"] = str(a.pt)
     if a.premises in ("Owner", "Tenant"):

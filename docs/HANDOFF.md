@@ -237,3 +237,14 @@ web/API requests, and then reproduce them in code (Bindswift backend → carrier
    First Connect appointment.
 6. Design `backend/app/integrations/hiscox.py` (and others) from the notes. Keep a human
    approval step before any bind.
+
+## Update 2026-11-15 (evening): live instant quotes
+
+- **Hiscox automation works end to end** (`backend/app/integrations/hiscox.py`). Live test: Howard Housing Solutions, Inc (Accounting) quoted $1,301/yr, ref S112.767.614. Sign-in starts at the partner page's `login_url_plain` (GatewayExternalLinkServlet); the quote never binds, stops on unanswered questions, recognizes declines, and clicks Home at the end to release the quote lock. Offline check: `scripts/hiscox_replay_check.py`; live check: `scripts/hiscox_test_quote.py`.
+- **Short business profile → instant quote** (live mode). `appetite.py` is the single list of classes and Hiscox codes (sent to the page via `/api/config`). `POST /api/profile` saves a submission with `kind='profile'` and a `match`; `POST /api/profile/{ref}/instant-quote` runs Hiscox (one at a time, `pg_advisory_xact_lock`), saves the quote with a `/q/` bind link already sent. No match or a decline → status `needs_application`; the client continues to the full ACORD app (prefilled, `profileRef`), which marks the profile `superseded`.
+- **Admin switch** "Live instant quotes" (table `app_settings`, key `instant_quotes`), off by default.
+- **Free eligibility check** `POST /api/eligibility` (`eligibility.py`): Claude (`ELIGIBILITY_MODEL`, forced tool call) maps a description to a class; `appetite.match` decides. Keyword fallback without `ANTHROPIC_API_KEY`.
+- **Main-street classes** in the full application: the WIP patch (`docs/wip-main-street-backend.patch`) is now applied; `index.html` TRADES/STEPS/buildAcord mirror it (parity checked for 5 classes).
+- **Demo vs live**: `SITE_MODE=demo` or `?demo=1` shows the demo on a live backend.
+- **Howard Analytics site** served at `/howard-analytics/` from `public/howard-analytics/` (static on Vercel, FastAPI route locally, its own CSP).
+- After pulling: run `schema.sql` and `roles.sql` again (new columns, statuses, `app_settings`).

@@ -26,14 +26,26 @@ BASES = {"sandbox": "https://api-sandbox.coterieinsurance.com/v1.6/commercial",
 # From Coterie's artisan & trade contractor guide (in appetite). Others: check with Coterie.
 IN_APPETITE = {"drywall", "electrical", "paint_int", "paint_ext", "hvac", "masonry", "plumbing",
                "roofing", "remodel"}
+# Main-street classes Bindswift targets first (Coterie writes BOP/GL for these in New York).
+MAIN_STREET = {"salon", "barber", "beauty", "consultant", "marketing", "bookkeeping", "doula", "wellness", "retail"}
 
 
 def eligibility(a: dict) -> list[str]:
     """Reasons this risk may be out of Coterie's appetite. Empty list = looks eligible."""
     out = []
+    staff = int(a.get("ft") or 0) + int(a.get("pt") or 0)
+    if a.get("trade") in MAIN_STREET:
+        if float(a.get("revenue") or 0) > 10_000_000:
+            out.append("Revenue over $10M (Coterie's limit).")
+        if staff > 50:
+            out.append("More than 50 employees (Coterie's limit).")
+        if int(a.get("losses") or 0) > 3:
+            out.append("More than three claims in 5 years (Coterie's limit).")
+        return out
+    out.append("Coterie excludes contractor classes in New York State.")
     if float(a.get("revenue") or 0) > 5_000_000:
         out.append("Revenue over $5M (Coterie's contractor limit).")
-    if int(a.get("ft") or 0) + int(a.get("pt") or 0) > 15:
+    if staff > 15:
         out.append("More than 15 employees (Coterie's contractor limit).")
     if a.get("trade") == "paint_ext" and a.get("height") != "1-3":
         out.append("Exterior painting is limited to buildings under 3 stories.")
